@@ -89,6 +89,4 @@ int main(int argc, char** argv)
     SequenceOverlap read_12 = Overlapper::computeOverlap(read_1, read_2);
     std::cout << read_12 << "\n\n";
     read_12.printAlignment(read_1, read_2);
-
-
 }
