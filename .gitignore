@@ -1,0 +1,13 @@
+# ignore build files
+*.in
+*/*.in
+configure
+autom4te.cache/
+aclocal.m4
+*.swp
+depcomp
+install-sh
+missing
+build*
+*/*.o
+overlap/overlapper-test
