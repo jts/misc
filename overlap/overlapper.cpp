@@ -110,6 +110,7 @@ void SequenceOverlap::printAlignment(const std::string& s1, const std::string& s
         std::cout << "S2\t" << sub_2 << "\n";
         std::cout << "\n";
     }
+    std::cout << "Score: " << score << "\n";
 }
 
 //
@@ -122,10 +123,10 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
         output.score = 0;
     }
 
-    // Scores
-    const int MATCH_SCORE = 2;
-    const int GAP_PENALTY = -1;
-    const int MISMATCH_PENALTY = -1;
+    // We use same scoring as bwasw
+    const int MATCH_SCORE = 1;
+    const int GAP_PENALTY = -5;
+    const int MISMATCH_PENALTY = -3;
 
     // We perform the dynamic programming one column at a time to avoid quadratic memory usage
     size_t num_columns = s1.size() + 1;
@@ -184,10 +185,12 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     if(max_column_value > max_row_value) {
         i = num_columns - 1;
         j = max_column_index;
+        output.score = max_column_value;
     }
     else {
         i = max_row_index;
         j = num_rows - 1;
+        output.score = max_row_value;
     }
 
     // Set the alignment endpoints
@@ -246,7 +249,6 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     // Add last symbol/run
     compact_cigar << curr_run << curr_symbol;
     output.cigar = compact_cigar.str();
-    
     return output;
 }
 
