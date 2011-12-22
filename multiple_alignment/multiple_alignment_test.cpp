@@ -33,6 +33,49 @@
 
 int main(int argc, char** argv)
 {
+
+    std::string name0 = "read0";
+    std::string name1 = "read1";
+    std::string name2 = "read2";
+    std::string name3 = "read3";
+    std::string name4 = "read4";
+    std::string name5 = "read5";
+    std::string name6 = "read6";
+    std::string name7 = "read7";
+    std::string name8 = "read8";
+
+    std::string sequence0 = "ATAGAGATACAACGTAAGACTACGAT";
+    std::string sequence1 =  "ATACAACTAATGACTACGAT";
+    std::string sequence2 =   "TACAACTAATGACTACGAT";
+    std::string sequence3 =    "ACAACTAATGACCTACGAT";
+    std::string sequence4 =     "CAACTAATGACCCTACGAT";
+    std::string sequence5 =     "CAACTAATGACCCCTACGAT";
+    std::string sequence6 =  "ATAGAGAATACAACTAATGACTACGAT";
+
+    SequenceOverlap overlap01 = Overlapper::computeOverlap(sequence0, sequence1);
+    SequenceOverlap overlap02 = Overlapper::computeOverlap(sequence0, sequence2);
+    SequenceOverlap overlap03 = Overlapper::computeOverlap(sequence0, sequence3);
+    SequenceOverlap overlap04 = Overlapper::computeOverlap(sequence0, sequence4);
+    SequenceOverlap overlap05 = Overlapper::computeOverlap(sequence0, sequence5);
+    SequenceOverlap overlap06 = Overlapper::computeOverlap(sequence0, sequence6);
+
+    MultipleAlignment ma;
+    ma.addBaseElement(name0, sequence0);
+    ma.addSequenceClipped(name1, sequence1, name0, overlap01);
+    ma.addSequenceClipped(name2, sequence2, name0, overlap02);
+    ma.addSequenceClipped(name3, sequence3, name0, overlap03);
+    ma.addSequenceClipped(name4, sequence4, name0, overlap04);
+    ma.addSequenceClipped(name5, sequence5, name0, overlap05);
+    ma.addSequenceClipped(name6, sequence6, name0, overlap06);
+
+    std::cout << "Final MA\n";
+    ma.print();
+
+    // ACGTAA-GAC
+    // AC-TAATGAC
+
+    exit(EXIT_SUCCESS);
+
     std::cout << "Testing multiple alignment\n";
     if(argc < 2) {
         std::cerr << "No filename given\n";

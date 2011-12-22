@@ -124,7 +124,7 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     }
 
     // We use same scoring as bwasw
-    const int MATCH_SCORE = 1;
+    const int MATCH_SCORE = 2;
     const int GAP_PENALTY = -5;
     const int MISMATCH_PENALTY = -3;
 
