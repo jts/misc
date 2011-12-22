@@ -34,6 +34,7 @@
 int main(int argc, char** argv)
 {
 
+    std::cout << "Testing set1\n";
     std::string name0 = "read0";
     std::string name1 = "read1";
     std::string name2 = "read2";
@@ -71,12 +72,7 @@ int main(int argc, char** argv)
     std::cout << "Final MA\n";
     ma.print();
 
-    // ACGTAA-GAC
-    // AC-TAATGAC
-
-    exit(EXIT_SUCCESS);
-
-    std::cout << "Testing multiple alignment\n";
+    std::cout << "Testing multiple alignment from file\n";
     if(argc < 2) {
         std::cerr << "No filename given\n";
         exit(EXIT_FAILURE);
