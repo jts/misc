@@ -121,7 +121,6 @@ void MultipleAlignment::addSequenceClipped(const std::string& incoming_name,
 //
 void MultipleAlignment::addSequenceExtendLast(const std::string& incoming_name,
                                               const std::string& incoming_sequence,
-                                              const std::string& reference_name,
                                               const SequenceOverlap& previous_incoming_overlap)
 {
     // This function cannot be called before a base element has been added

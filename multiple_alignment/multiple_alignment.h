@@ -76,7 +76,6 @@ class MultipleAlignment
         // are defined first, and the coordinates for the incoming sequence are defined second.
         void addSequenceExtendLast(const std::string& incoming_name,
                                    const std::string& incoming_sequence,
-                                   const std::string& reference_name,
                                    const SequenceOverlap& previous_incoming_overlap);
 
         // Print the alignment to stdout
