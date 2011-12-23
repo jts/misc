@@ -41,6 +41,12 @@ bool SequenceOverlap::isValid() const
 }
 
 //
+double SequenceOverlap::getPercentIdentity() const
+{
+    return (double)(total_columns - edit_distance) * 100.0f / total_columns;
+}
+
+//
 void SequenceOverlap::printAlignment(const std::string& s1, const std::string& s2) const
 {
     assert(isValid());
@@ -111,6 +117,7 @@ void SequenceOverlap::printAlignment(const std::string& s1, const std::string& s
         std::cout << "\n";
     }
     std::cout << "Score: " << score << "\n";
+    printf("Identity: %2.2lf\n", getPercentIdentity());
 }
 
 //
@@ -196,6 +203,8 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     // Set the alignment endpoints
     output.end_1 = i;
     output.end_2 = j;
+    output.edit_distance = 0;
+    output.total_columns = 0;
 
     std::string cigar;
     while(i > 0 && j > 0) {
@@ -203,11 +212,15 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
         int idx_1 = i - 1;
         int idx_2 = j - 1;
 
-        int diagonal = score_matrix[i - 1][j - 1] + (s1[idx_1] == s2[idx_2] ? MATCH_SCORE : MISMATCH_PENALTY);
+        bool is_match = s1[idx_1] == s2[idx_2];
+
+        int diagonal = score_matrix[i - 1][j - 1] + (is_match ? MATCH_SCORE : MISMATCH_PENALTY);
         int up = score_matrix[i][j-1] + GAP_PENALTY;
         int left = score_matrix[i-1][j] + GAP_PENALTY;
 
         if(score_matrix[i][j] == diagonal) {
+            if(!is_match)
+                output.edit_distance += 1;
             cigar.push_back('M');
             i -= 1;
             j -= 1;
@@ -215,12 +228,16 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
         else if(score_matrix[i][j] == up) {
             cigar.push_back('D');
             j -= 1;
+            output.edit_distance += 1;
         }
         else {
             assert(score_matrix[i][j] == left);
             cigar.push_back('I');
             i -= 1;
+            output.edit_distance += 1;
         }
+
+        output.total_columns += 1;
     }
 
     // Set the alignment startpoints

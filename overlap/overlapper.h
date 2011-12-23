@@ -37,6 +37,10 @@ struct SequenceOverlap
 
     // Print the alignment with padding characters
     void printAlignment(const std::string& s1, const std::string& s2) const;
+    
+    // Return the percent identity which we define to be
+    // the number of matching columns divided by the total number of columns
+    double getPercentIdentity() const;
 
     //
     friend std::ostream& operator<<(std::ostream& out, const SequenceOverlap& overlap)
@@ -55,7 +59,11 @@ struct SequenceOverlap
     int end_1;
     int start_2;
     int end_2;
+
+    //
     int score;
+    int edit_distance;
+    int total_columns;
     std::string cigar;
 
 };

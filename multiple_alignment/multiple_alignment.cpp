@@ -75,7 +75,9 @@ void MultipleAlignmentElement::insertGapBeforeColumn(size_t column_index)
     }
     else {
         assert(column_index > column_offset);
-        sequence.insert(column_index - column_offset, 1, '-');
+        size_t insert_position = column_index - column_offset;
+        if(insert_position < sequence.size())
+            sequence.insert(column_index - column_offset, 1, '-');
     }
 }
 
@@ -95,7 +97,7 @@ std::string MultipleAlignmentElement::getUnpaddedSequence() const
 //
 
 //
-void MultipleAlignment::addBaseElement(const std::string& name, const std::string& sequence)
+void MultipleAlignment::addBaseSequence(const std::string& name, const std::string& sequence)
 {
     m_sequences.push_back(MultipleAlignmentElement(name, sequence, 0));
 }
@@ -153,31 +155,27 @@ void MultipleAlignment::_addSequence(const std::string& name,
     // The output padded sequence for the incoming
     std::string padded_output;
 
-    // Expand the cigar for easier parsing
-    std::string expanded_cigar = expandCigar(overlap.cigar);
-    assert(!expanded_cigar.empty());
-
-#ifdef MA_DEBUG
-    std::cout << "Cigar: " << expanded_cigar << "\n";
-    std::cout << "template: " << template_padded << "\n";
-    std::cout << "incoming: " << sequence << "\n";
-#endif
-
     // Iterate over the cigar string and the padded sequence of the template element
     // to determine where to insert gap symbols
     size_t cigar_index = 0;
     size_t template_index = template_element->getPaddedPositionOfBase(overlap.start_1);
-    size_t incoming_index = 0;
+    size_t incoming_index = overlap.start_2;
     size_t template_offset = template_element->column_offset;
     size_t incoming_offset = template_index + template_offset;
 
+    // Expand the cigar for easier parsing
+    std::string expanded_cigar = expandCigar(overlap.cigar);
+    assert(!expanded_cigar.empty());
+    assert(template_index < template_padded.size());
+    assert(template_padded[template_index] != '-');
+
 #ifdef MA_DEBUG
+    std::cout << "Cigar: " << expanded_cigar << "\n";
+    std::cout << "template: " << template_padded.substr(template_index) << "\n";
+    std::cout << "incoming: " << sequence.substr(incoming_index) << "\n";
     std::cout << "Pairwise:\n";
     overlap.printAlignment(template_element->getUnpaddedSequence(), sequence);
 #endif
-
-    assert(template_index < template_padded.size());
-    assert(template_padded[template_index] != '-');
 
     while(cigar_index < expanded_cigar.size()) {
 

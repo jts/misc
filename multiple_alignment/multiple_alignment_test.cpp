@@ -29,11 +29,11 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
 
 int main(int argc, char** argv)
 {
-
     std::cout << "Testing set1\n";
     std::string name0 = "read0";
     std::string name1 = "read1";
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
     SequenceOverlap overlap06 = Overlapper::computeOverlap(sequence0, sequence6);
 
     MultipleAlignment ma;
-    ma.addBaseElement(name0, sequence0);
+    ma.addBaseSequence(name0, sequence0);
     ma.addSequenceClipped(name1, sequence1, name0, overlap01);
     ma.addSequenceClipped(name2, sequence2, name0, overlap02);
     ma.addSequenceClipped(name3, sequence3, name0, overlap03);
@@ -90,9 +90,22 @@ int main(int argc, char** argv)
     std::cout << "Read " << sequences.size() << " sequences from file\n";
 
     std::cout << "Aligning all sequences against sequence[0]\n";
+
+    std::vector<std::string> sequence_names;
+    std::vector<SequenceOverlap> sequence_overlaps;
+    sequence_names.push_back("root");
+
+    MultipleAlignment real_ma;
+    real_ma.addBaseSequence(sequence_names[0], sequences[0]);
+
     for(size_t i = 1; i < sequences.size(); ++i) {
-        printf("Alignment %d/%zu\n", 0, i);
+        std::stringstream namer;
+        namer << "seq-" << i;
+        sequence_names.push_back(namer.str());
         SequenceOverlap overlap = Overlapper::computeOverlap(sequences[0], sequences[i]);
-        overlap.printAlignment(sequences[0], sequences[i]);
+
+        real_ma.addSequenceClipped(sequence_names[i], sequences[i], sequence_names[0], overlap);
     }
+
+    real_ma.print();
 }

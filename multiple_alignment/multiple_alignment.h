@@ -58,7 +58,7 @@ class MultipleAlignment
         MultipleAlignment() {}
 
         // Add the first element to the multiple alignment
-        void addBaseElement(const std::string& name, const std::string& sequence);
+        void addBaseSequence(const std::string& name, const std::string& sequence);
 
         // Add a new sequence to the multiple alignment. This function uses
         // the existing sequence in the multiple alignment with the name
