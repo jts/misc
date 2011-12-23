@@ -24,7 +24,8 @@
 // SOFTWARE.
 // ------------------------------------------------------------------------------
 #include "multiple_alignment.h"
-#include "../overlap/overlapper.h"
+#include "multiple_alignment_builder.h"
+#include "overlapper.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -35,77 +36,36 @@
 int main(int argc, char** argv)
 {
     std::cout << "Testing set1\n";
-    std::string name0 = "read0";
-    std::string name1 = "read1";
-    std::string name2 = "read2";
-    std::string name3 = "read3";
-    std::string name4 = "read4";
-    std::string name5 = "read5";
-    std::string name6 = "read6";
-    std::string name7 = "read7";
-    std::string name8 = "read8";
+    std::vector<std::string> test_sequences_0;
 
-    std::string sequence0 = "ATAGAGATACAACGTAAGACTACGAT";
-    std::string sequence1 =  "ATACAACTAATGACTACGAT";
-    std::string sequence2 =   "TACAACTAATGACTACGAT";
-    std::string sequence3 =    "ACAACTAATGACCTACGAT";
-    std::string sequence4 =     "CAACTAATGACCCTACGAT";
-    std::string sequence5 =     "CAACTAATGACCCCTACGAT";
-    std::string sequence6 =  "ATAGAGAATACAACTAATGACTACGAT";
+    test_sequences_0.push_back("ATAGAGATACAACGTAAGACTACGAT");
+    test_sequences_0.push_back("ATACAACTAATGACTACGAT");
+    test_sequences_0.push_back("TACAACTAATGACTACGAT");
+    test_sequences_0.push_back("ACAACTAATGACCTACGAT");
+    test_sequences_0.push_back("CAACTAATGACCCTACGAT");
+    test_sequences_0.push_back("CAACTAATGACCCCTACGAT");
+    test_sequences_0.push_back("ATAGAGAATACAACTAATGACTACGAT");
 
-    SequenceOverlap overlap01 = Overlapper::computeOverlap(sequence0, sequence1);
-    SequenceOverlap overlap02 = Overlapper::computeOverlap(sequence0, sequence2);
-    SequenceOverlap overlap03 = Overlapper::computeOverlap(sequence0, sequence3);
-    SequenceOverlap overlap04 = Overlapper::computeOverlap(sequence0, sequence4);
-    SequenceOverlap overlap05 = Overlapper::computeOverlap(sequence0, sequence5);
-    SequenceOverlap overlap06 = Overlapper::computeOverlap(sequence0, sequence6);
+    MultipleAlignment ma_0 = MultipleAlignmentBuilder::alignToFirst(test_sequences_0);
+    ma_0.print();
 
-    MultipleAlignment ma;
-    ma.addBaseSequence(name0, sequence0);
-    ma.addSequenceClipped(name1, sequence1, name0, overlap01);
-    ma.addSequenceClipped(name2, sequence2, name0, overlap02);
-    ma.addSequenceClipped(name3, sequence3, name0, overlap03);
-    ma.addSequenceClipped(name4, sequence4, name0, overlap04);
-    ma.addSequenceClipped(name5, sequence5, name0, overlap05);
-    ma.addSequenceClipped(name6, sequence6, name0, overlap06);
-
-    std::cout << "Final MA\n";
-    ma.print();
-
-    std::cout << "Testing multiple alignment from file\n";
+    std::cout << "\nTesting multiple alignment from file\n";
     if(argc < 2) {
         std::cerr << "No filename given\n";
         exit(EXIT_FAILURE);
     }
 
-    std::vector<std::string> sequences;
+    std::vector<std::string> test_sequences_1;
     
     std::string filename = argv[1];
     std::cout << "Reading sequences from " << filename << "\n";
     std::ifstream input_stream(filename.c_str());
     std::string tmp;
     while(getline(input_stream, tmp))
-        sequences.push_back(tmp);
+        test_sequences_1.push_back(tmp);
 
-    std::cout << "Read " << sequences.size() << " sequences from file\n";
+    std::cout << "Read " << test_sequences_1.size() << " sequences from file\n";
 
-    std::cout << "Aligning all sequences against sequence[0]\n";
-
-    std::vector<std::string> sequence_names;
-    std::vector<SequenceOverlap> sequence_overlaps;
-    sequence_names.push_back("root");
-
-    MultipleAlignment real_ma;
-    real_ma.addBaseSequence(sequence_names[0], sequences[0]);
-
-    for(size_t i = 1; i < sequences.size(); ++i) {
-        std::stringstream namer;
-        namer << "seq-" << i;
-        sequence_names.push_back(namer.str());
-        SequenceOverlap overlap = Overlapper::computeOverlap(sequences[0], sequences[i]);
-
-        real_ma.addSequenceClipped(sequence_names[i], sequences[i], sequence_names[0], overlap);
-    }
-
-    real_ma.print();
+    MultipleAlignment ma_1 = MultipleAlignmentBuilder::alignToFirst(test_sequences_1);
+    ma_1.print();
 }

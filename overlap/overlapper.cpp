@@ -126,8 +126,8 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     // Exit with invalid intervals if either string is zero length
     SequenceOverlap output;
     if(s1.empty() || s2.empty()) {
-        output.start_1 = output.end_1 = output.start_2 = output.end_2 = -1;
-        output.score = 0;
+        std::cerr << "Overlapper::computeOverlap error: empty input sequence\n";
+        exit(EXIT_FAILURE);
     }
 
     // We use same scoring as bwasw
