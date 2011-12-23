@@ -89,4 +89,11 @@ int main(int argc, char** argv)
     SequenceOverlap read_12 = Overlapper::computeOverlap(read_1, read_2);
     std::cout << read_12 << "\n\n";
     read_12.printAlignment(read_1, read_2);
+
+    std::string read_3 = "CAATAGTCCCAGTCACTCAGGAGGTTGAGGTAGGAGGATTGTTTGAGTTTGGGAGGTCGAGGCTGTAGTGAGCTATGATCACACCACTGCACTCCAGCCTG";
+    std::string read_4 = "AAATGAGGTTGAGGACAATTTCCCAGGAAGTACAACAAAAACAAAAAAAGAAAAGCAAAACAGTGAGCTGAGATCACACCACTGCACTCCAGCCTGGGTGA";
+
+    SequenceOverlap read_34 = Overlapper::computeOverlap(read_3, read_4);
+    std::cout << read_34 << "\n\n";
+    read_34.printAlignment(read_3, read_4);
 }

@@ -29,10 +29,12 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#include <limits>
 #include <stdio.h>
 
 //
 #define max3(x,y,z) std::max(std::max(x,y), z)
+//#define DEBUG_OVERLAPPER 1
 
 //
 bool SequenceOverlap::isValid() const
@@ -162,13 +164,15 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     // last row or last column is the maximum scoring overlap
     // for the pair of strings. We start the backtracking from
     // that cell
-    int max_row_value = 0;
+    int max_row_value = std::numeric_limits<int>::min();
     size_t max_row_index = 0;
-    int max_column_value = 0;
+    int max_column_value = std::numeric_limits<int>::min();
     size_t max_column_index = 0;
 
     // Check every column of the last row
-    for(size_t i = 0; i < num_columns; ++i) {
+    // Start from 1 to avoid making an empty alignment
+    // in the case that the best alignment is actually pretty poor
+    for(size_t i = 1; i < num_columns; ++i) {
         int v = score_matrix[i][num_rows - 1];
         if(score_matrix[i][num_rows - 1] > max_row_value) {
             max_row_value = v;
@@ -177,7 +181,7 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     }
 
     // Check every row of the last column
-    for(size_t j = 0; j < num_rows; ++j) {
+    for(size_t j = 1; j < num_rows; ++j) {
         int v = score_matrix[num_columns -1 ][j];
         if(v > max_column_value) {
             max_column_value = v;
@@ -203,6 +207,11 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     // Set the alignment endpoints
     output.end_1 = i;
     output.end_2 = j;
+
+#ifdef DEBUG_OVERLAPPER
+    printf("Endpoints selected: (%d %d) with score %d\n", output.end_1, output.end_2, output.score);
+#endif
+
     output.edit_distance = 0;
     output.total_columns = 0;
 
