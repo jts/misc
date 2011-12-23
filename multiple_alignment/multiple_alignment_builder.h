@@ -35,10 +35,6 @@ namespace MultipleAlignmentBuilder
 // with respect to the first sequence in the vector
 MultipleAlignment alignToFirst(const std::vector<std::string>& sequences);
 
-// Build an extended multiple alignment by greedily using the longest
-// overlap for each sequence
-MultipleAlignment greedyExtended(const std::vector<std::string>& sequences);
-
 };
 
 #endif  // MULTIPLE_ALIGNMENT_BUILDER_H

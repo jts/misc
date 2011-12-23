@@ -52,12 +52,4 @@ MultipleAlignment alignToFirst(const std::vector<std::string>& sequences)
     return out_alignment;
 }
 
-//
-MultipleAlignment greedyExtended(const std::vector<std::string>& sequences)
-{
-    (void)sequences;
-    MultipleAlignment out_alignment;
-    return out_alignment;
-}
-
 }
