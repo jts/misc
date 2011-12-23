@@ -42,6 +42,10 @@ struct SequenceOverlap
     // the number of matching columns divided by the total number of columns
     double getPercentIdentity() const;
 
+    // Returns the length of the overlap, defined to be the 
+    // number of columns in the alignment
+    int getOverlapLength() const { return total_columns; }
+
     //
     friend std::ostream& operator<<(std::ostream& out, const SequenceOverlap& overlap)
     {
