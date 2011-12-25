@@ -48,6 +48,7 @@ int main(int argc, char** argv)
 
     MultipleAlignment ma_0 = MultipleAlignmentBuilder::alignToFirst(test_sequences_0);
     ma_0.print();
+    ma_0.printPileup();
 
     std::cout << "\nTesting multiple alignment from file\n";
     if(argc < 2) {
@@ -68,4 +69,5 @@ int main(int argc, char** argv)
 
     MultipleAlignment ma_1 = MultipleAlignmentBuilder::alignToFirst(test_sequences_1);
     ma_1.print();
+    ma_1.printPileup();
 }

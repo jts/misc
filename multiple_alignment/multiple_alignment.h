@@ -32,7 +32,25 @@
 struct MultipleAlignmentElement
 {
     // Functions
-    MultipleAlignmentElement(const std::string& _name, const std::string& _sequence, size_t offset);
+    MultipleAlignmentElement(const std::string& _name, 
+                             const std::string& _sequence, 
+                             const std::string& _quality,
+                             size_t leading, 
+                             size_t trailing);
+
+    //
+    size_t getNumColumns() const;
+
+    // Returns the symbol for the requested column
+    // If the column is in the leading/trailing segment
+    // this will return '\0'. Otherwise it will return a base
+    // or a gap character
+    char getColumnSymbol(size_t column_idx) const;
+
+    // Returns the quality symbol for the requested column
+    // If there is no quality information of column is in the leading/trailing segment
+    // this will return '\0'. Otherwise it will return a quality or a gap character
+    char getColumnQuality(size_t column_idx) const;
 
     // Returns the sequence with all padding characters removed
     std::string getUnpaddedSequence() const;
@@ -51,7 +69,7 @@ struct MultipleAlignmentElement
     std::string padded_quality;
 
     // The number of columns in the multiple alignment before/after
-    // the sequence data for this sequence starts
+    // the sequence data
     size_t leading_columns;
     size_t trailing_columns;
 
@@ -63,15 +81,18 @@ class MultipleAlignment
         MultipleAlignment() {}
 
         // Add the first element to the multiple alignment
-        void addBaseSequence(const std::string& name, const std::string& sequence);
+        // The quality field is allowed to be empty
+        void addBaseSequence(const std::string& name, const std::string& sequence, const std::string& quality);
 
         // Add a new sequence to the multiple alignment, which overlaps
         // the first sequence added to the multiple alignment (the base sequence).
         // Preconditions are that the base sequence exists and the overlap
         // that is passed in refers to the overlap between the base sequence (as
         // the first set of coordinates) and the incoming sequence. 
+        // The quality field is allowed to be empty
         void addOverlap(const std::string& incoming_name,
                         const std::string& incoming_sequence,
+                        const std::string& incoming_quality,
                         const SequenceOverlap& reference_incoming_overlap);
 
         // Add a new sequence to the multiple alignment by extending the last sequence added.
@@ -79,19 +100,25 @@ class MultipleAlignment
         // of sequences that are laid out into a contig. The SequenceOverlap object must be
         // defined such that the coordinates for the sequence already in the multiple alignment
         // are defined first, and the coordinates for the incoming sequence are defined second.
+        // The quality field is allowed to be empty
         void addExtension(const std::string& incoming_name,
                           const std::string& incoming_sequence,
+                          const std::string& incoming_quality,
                           const SequenceOverlap& previous_incoming_overlap);
 
         // Print the alignment to stdout
-        void print() const;
+        void print(int max_columns = 120) const;
     
+        // Print a pileup of the base symbol for each column of the alignment
+        void printPileup() const;
+
     private:
      
         // Internal function for performing the addition of a new sequence. Called by
         // addSequenceClipped/addSequenceExtend
         void _addSequence(const std::string& name, 
                           const std::string& sequence, 
+                          const std::string& quality, 
                           MultipleAlignmentElement* template_element, 
                           const SequenceOverlap& overlap);
         

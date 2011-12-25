@@ -40,13 +40,13 @@ MultipleAlignment alignToFirst(const std::vector<std::string>& sequences)
     std::string base_name = "sequence-0";
 
     MultipleAlignment out_alignment;
-    out_alignment.addBaseSequence(base_name, sequences[0]);
+    out_alignment.addBaseSequence(base_name, sequences[0], "");
 
     for(size_t i = 1; i < sequences.size(); ++i) {
         SequenceOverlap overlap = Overlapper::computeOverlap(sequences[0], sequences[i]);
         std::stringstream namer;
         namer << "sequence-" << i;
-        out_alignment.addOverlap(namer.str(), sequences[i], overlap);
+        out_alignment.addOverlap(namer.str(), sequences[i], "", overlap);
     }
 
     return out_alignment;
