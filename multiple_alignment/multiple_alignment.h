@@ -39,7 +39,7 @@ struct MultipleAlignmentElement
 
     // Returns the position in the padded string of the base at index idx of
     // the unpadded sequence.
-    // This function will assert if the base index is out of bounds
+    // Precondition: idx is less than the number of sequence bases
     int getPaddedPositionOfBase(size_t idx) const;
 
     // Insert a new gap before the specified column
@@ -47,8 +47,14 @@ struct MultipleAlignmentElement
     
     // Data
     std::string name;
-    std::string sequence;
-    size_t column_offset;
+    std::string padded_sequence;
+    std::string padded_quality;
+
+    // The number of columns in the multiple alignment before/after
+    // the sequence data for this sequence starts
+    size_t leading_columns;
+    size_t trailing_columns;
+
 };
 
 class MultipleAlignment

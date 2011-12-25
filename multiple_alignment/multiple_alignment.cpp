@@ -40,8 +40,9 @@
 MultipleAlignmentElement::MultipleAlignmentElement(const std::string& _name, 
                                                    const std::string& _sequence,
                                                    size_t offset) : name(_name), 
-                                                                    sequence(_sequence),
-                                                                    column_offset(offset)
+                                                                    padded_sequence(_sequence),
+                                                                    leading_columns(offset),
+                                                                    trailing_columns(0)
 {
 }
 
@@ -49,8 +50,8 @@ MultipleAlignmentElement::MultipleAlignmentElement(const std::string& _name,
 int MultipleAlignmentElement::getPaddedPositionOfBase(size_t idx) const
 {
     size_t unpadded_count = 0;
-    for(size_t i = 0; i < sequence.size(); ++i) {
-        if(sequence[i] != '-') {
+    for(size_t i = 0; i < padded_sequence.size(); ++i) {
+        if(padded_sequence[i] != '-') {
             if(unpadded_count == idx)
                 return i;
             else
@@ -65,19 +66,21 @@ int MultipleAlignmentElement::getPaddedPositionOfBase(size_t idx) const
 //
 void MultipleAlignmentElement::insertGapBeforeColumn(size_t column_index)
 {
-    // Check if the column to insert the gap falls within the offset region
-    // If so, just increase the offset to account for the shift in columns
+    // Check if the column to insert the gap falls within the leading columns
+    // If so, just increase the number of leading columns to account for the inserted base.
     // If the column index is one greater than the offset, then we want to 
     // insert a gap before the first base. This is equivalent to just
     // extending the offset.
-    if(column_index <= column_offset + 1) {
-        column_offset += 1;
+    if(column_index <= leading_columns + 1) {
+        leading_columns += 1;
     }
     else {
-        assert(column_index > column_offset);
-        size_t insert_position = column_index - column_offset;
-        if(insert_position < sequence.size())
-            sequence.insert(column_index - column_offset, 1, '-');
+        assert(column_index > leading_columns);
+        size_t insert_position = column_index - leading_columns;
+        if(insert_position < padded_sequence.size())
+            padded_sequence.insert(insert_position, 1, '-');
+        else
+            trailing_columns += 1;
     }
 }
 
@@ -85,9 +88,9 @@ void MultipleAlignmentElement::insertGapBeforeColumn(size_t column_index)
 std::string MultipleAlignmentElement::getUnpaddedSequence() const
 {
     std::string out;
-    for(size_t i = 0; i < sequence.size(); ++i) {
-        if(sequence[i] != '-')
-            out.push_back(sequence[i]);
+    for(size_t i = 0; i < padded_sequence.size(); ++i) {
+        if(padded_sequence[i] != '-')
+            out.push_back(padded_sequence[i]);
     }
     return out;
 }
@@ -132,16 +135,8 @@ void MultipleAlignment::_addSequence(const std::string& name,
                                      MultipleAlignmentElement* template_element, 
                                      const SequenceOverlap& overlap)
 {
-    // Ensure the name of the incoming element is unique
-    for(size_t i = 0; i < m_sequences.size(); ++i) {
-        if(m_sequences[i].name == name) {
-            std::cerr << "Error in constructing multiple alignment, non-unique name " << name << "\n";
-            exit(EXIT_FAILURE);
-        }
-    }
-
     // Get the padded sequence for the template element
-    const std::string& template_padded = template_element->sequence;
+    const std::string& template_padded = template_element->padded_sequence;
 
     // The output padded sequence for the incoming
     std::string padded_output;
@@ -151,8 +146,8 @@ void MultipleAlignment::_addSequence(const std::string& name,
     size_t cigar_index = 0;
     size_t template_index = template_element->getPaddedPositionOfBase(overlap.start_1);
     size_t incoming_index = overlap.start_2;
-    size_t template_offset = template_element->column_offset;
-    size_t incoming_offset = template_index + template_offset;
+    size_t template_leading = template_element->leading_columns;
+    size_t incoming_leading = template_index + template_leading;
 
     // Expand the cigar for easier parsing
     std::string expanded_cigar = expandCigar(overlap.cigar);
@@ -199,7 +194,7 @@ void MultipleAlignment::_addSequence(const std::string& name,
                     cigar_index += 1;
                     break;
                 case 'D':
-                    insertGapBeforeColumn(template_index + template_offset);
+                    insertGapBeforeColumn(template_index + template_leading);
                     padded_output.push_back(sequence[incoming_index]);
                     incoming_index += 1;
                     cigar_index += 1;
@@ -214,15 +209,15 @@ void MultipleAlignment::_addSequence(const std::string& name,
         }
     }
 
-    m_sequences.push_back(MultipleAlignmentElement(name, padded_output, incoming_offset));
+    m_sequences.push_back(MultipleAlignmentElement(name, padded_output, incoming_leading));
 }
 
 void MultipleAlignment::print() const
 {
     for(size_t i = 0; i < m_sequences.size(); ++i) {
-        std::string padding = std::string(m_sequences[i].column_offset, ' ');
+        std::string padding = std::string(m_sequences[i].leading_columns, ' ');
         printf("\t%s%s\t%s\n", padding.c_str(),
-                               m_sequences[i].sequence.c_str(), 
+                               m_sequences[i].padded_sequence.c_str(), 
                                m_sequences[i].name.c_str());
     }
 }
