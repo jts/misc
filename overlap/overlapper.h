@@ -28,6 +28,9 @@
 #include <string>
 #include <ostream>
 
+
+// Data structure to hold the result of
+// an overlap calculation
 struct SequenceOverlap
 {
     // Functions
@@ -63,6 +66,10 @@ struct SequenceOverlap
     int end_1;
     int start_2;
     int end_2;
+    
+    // The length of the input sequences
+    int length_1;
+    int length_2;
 
     //
     int score;

@@ -103,31 +103,23 @@ void MultipleAlignment::addBaseSequence(const std::string& name, const std::stri
 }
 
 // See header
-void MultipleAlignment::addSequenceClipped(const std::string& incoming_name,
-                                           const std::string& incoming_sequence,
-                                           const std::string& reference_name,
-                                           const SequenceOverlap& reference_incoming_overlap)
+void MultipleAlignment::addOverlap(const std::string& incoming_name,
+                                   const std::string& incoming_sequence,
+                                   const SequenceOverlap& reference_incoming_overlap)
 {
-    //
-    MultipleAlignmentElement* template_element = NULL;
-    for(size_t i = 0; i < m_sequences.size(); ++i) {
-        if(m_sequences[i].name == reference_name)
-            template_element = &m_sequences[i];
-    }
-
+    // This function cannot be called before a base element has been added
+    assert(!m_sequences.empty());
+    MultipleAlignmentElement* template_element = &m_sequences.front();
     _addSequence(incoming_name, incoming_sequence, template_element, reference_incoming_overlap);
 }
 
 //
-void MultipleAlignment::addSequenceExtendLast(const std::string& incoming_name,
-                                              const std::string& incoming_sequence,
-                                              const SequenceOverlap& previous_incoming_overlap)
+void MultipleAlignment::addExtension(const std::string& incoming_name,
+                                     const std::string& incoming_sequence,
+                                     const SequenceOverlap& previous_incoming_overlap)
 {
     // This function cannot be called before a base element has been added
     assert(!m_sequences.empty());
-
-    // Get an iterator to the sequence already existing in the multiple alignment
-    // that we use to detemine how to pad the new sequence.
     MultipleAlignmentElement* template_element = &m_sequences.back();
     _addSequence(incoming_name, incoming_sequence, template_element, previous_incoming_overlap);
 }

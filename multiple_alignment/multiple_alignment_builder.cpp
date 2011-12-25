@@ -46,7 +46,7 @@ MultipleAlignment alignToFirst(const std::vector<std::string>& sequences)
         SequenceOverlap overlap = Overlapper::computeOverlap(sequences[0], sequences[i]);
         std::stringstream namer;
         namer << "sequence-" << i;
-        out_alignment.addSequenceClipped(namer.str(), sequences[i], base_name, overlap);
+        out_alignment.addOverlap(namer.str(), sequences[i], overlap);
     }
 
     return out_alignment;

@@ -51,7 +51,6 @@ struct MultipleAlignmentElement
     size_t column_offset;
 };
 
-// TODO: Write conditions that must be met to construct the multiple alignment
 class MultipleAlignment
 {
     public:
@@ -60,23 +59,23 @@ class MultipleAlignment
         // Add the first element to the multiple alignment
         void addBaseSequence(const std::string& name, const std::string& sequence);
 
-        // Add a new sequence to the multiple alignment. This function uses
-        // the existing sequence in the multiple alignment with the name
-        // reference_name to project the new sequence into the alignment.
-        // Any bases that do not aligned to reference_name will be clipped off.
-        void addSequenceClipped(const std::string& incoming_name,
-                                const std::string& incoming_sequence,
-                                const std::string& reference_name,
-                                const SequenceOverlap& reference_incoming_overlap);
+        // Add a new sequence to the multiple alignment, which overlaps
+        // the first sequence added to the multiple alignment (the base sequence).
+        // Preconditions are that the base sequence exists and the overlap
+        // that is passed in refers to the overlap between the base sequence (as
+        // the first set of coordinates) and the incoming sequence. 
+        void addOverlap(const std::string& incoming_name,
+                        const std::string& incoming_sequence,
+                        const SequenceOverlap& reference_incoming_overlap);
 
-        // Add a new sequence to the multiple alignment by extending the previous sequence added.
+        // Add a new sequence to the multiple alignment by extending the last sequence added.
         // This function allows the progressive construction of a multiple alignment for a series
         // of sequences that are laid out into a contig. The SequenceOverlap object must be
         // defined such that the coordinates for the sequence already in the multiple alignment
         // are defined first, and the coordinates for the incoming sequence are defined second.
-        void addSequenceExtendLast(const std::string& incoming_name,
-                                   const std::string& incoming_sequence,
-                                   const SequenceOverlap& previous_incoming_overlap);
+        void addExtension(const std::string& incoming_name,
+                          const std::string& incoming_sequence,
+                          const SequenceOverlap& previous_incoming_overlap);
 
         // Print the alignment to stdout
         void print() const;

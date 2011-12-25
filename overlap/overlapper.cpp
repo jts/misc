@@ -207,7 +207,8 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     // Set the alignment endpoints
     output.end_1 = i;
     output.end_2 = j;
-
+    output.length_1 = s1.length();
+    output.length_2 = s2.length();
 #ifdef DEBUG_OVERLAPPER
     printf("Endpoints selected: (%d %d) with score %d\n", output.end_1, output.end_2, output.score);
 #endif
