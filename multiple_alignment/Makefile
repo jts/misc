@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-Wall -Werror -I../overlap
+CXXFLAGS=-Wall -Werror -Wextra -I../overlap
 
 multiple-alignment-test: multiple_alignment.o multiple_alignment_test.o multiple_alignment_builder.o ../overlap/overlapper.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^

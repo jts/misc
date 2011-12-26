@@ -280,6 +280,7 @@ void MultipleAlignment::_addSequence(const std::string& name,
 //
 void MultipleAlignment::print(int max_columns) const
 {
+    (void)max_columns;
     for(size_t i = 0; i < m_sequences.size(); ++i) {
         std::string padding = std::string(m_sequences[i].leading_columns, ' ');
         printf("\t%s%s\t%s\n", padding.c_str(),
