@@ -191,8 +191,8 @@ void MultipleAlignment::_addSequence(const std::string& name,
     // Iterate over the cigar string and the padded sequence of the template element
     // to determine where to insert gap symbols
     size_t cigar_index = 0;
-    size_t template_index = template_element->getPaddedPositionOfBase(overlap.start_1);
-    size_t incoming_index = overlap.start_2;
+    size_t template_index = template_element->getPaddedPositionOfBase(overlap.match[0].start);
+    size_t incoming_index = overlap.match[1].start;
     size_t template_leading = template_element->leading_columns;
     size_t incoming_leading = template_index + template_leading;
 
