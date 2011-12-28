@@ -28,6 +28,18 @@
 #include <string>
 #include <ostream>
 
+// A start/end coordinate pair representing
+// a subsequence. The end coordinate is
+// the index of the last base aligned.
+struct SequenceInterval
+{
+    // functions
+    bool isValid() const { return start <= end; }
+
+    // data
+    int start;
+    int end; // inclusive
+};
 
 // Data structure to hold the result of
 // an overlap calculation
@@ -52,8 +64,8 @@ struct SequenceOverlap
     //
     friend std::ostream& operator<<(std::ostream& out, const SequenceOverlap& overlap)
     {
-        out << "[" << overlap.start_1 << " " << overlap.end_1 << "] ";
-        out << "[" << overlap.start_2 << " " << overlap.end_2 << "] ";
+        out << "[" << overlap.match[0].start << " " << overlap.match[0].end << "] ";
+        out << "[" << overlap.match[1].start << " " << overlap.match[1].end << "] ";
         out << "C:" << overlap.cigar;
         return out;
     }
@@ -62,14 +74,10 @@ struct SequenceOverlap
 
     // The coordinates of the matching portion of each string
     // The end coordinate are the index of the last base matched
-    int start_1;
-    int end_1;
-    int start_2;
-    int end_2;
+    SequenceInterval match[2];
     
     // The length of the input sequences
-    int length_1;
-    int length_2;
+    int length[2];
 
     //
     int score;

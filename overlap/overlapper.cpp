@@ -39,7 +39,7 @@
 //
 bool SequenceOverlap::isValid() const
 {
-    return !(cigar.empty() || end_1 < start_1 || end_2 < start_2 || start_1 < 0 || start_2 < 0);
+    return !cigar.empty() && match[0].isValid() && match[1].isValid();
 }
 
 //
@@ -58,8 +58,8 @@ void SequenceOverlap::printAlignment(const std::string& s1, const std::string& s
 
     // Print out the initial part of the strings, which do not match. 
     // Typically this is the overhanging portion of one of the strings.
-    std::string leader_1 = s1.substr(0, start_1);
-    std::string leader_2 = s2.substr(0, start_2);
+    std::string leader_1 = s1.substr(0, match[0].start);
+    std::string leader_2 = s2.substr(0, match[1].start);
 
     // Pad the beginning of the output strings with spaces to align
     if(leader_1.size() < leader_2.size())
@@ -72,8 +72,8 @@ void SequenceOverlap::printAlignment(const std::string& s1, const std::string& s
     out_2.append(leader_2);
 
     // Process the matching region using the cigar operations
-    size_t current_1 = start_1;
-    size_t current_2 = start_2;
+    size_t current_1 = match[0].start;
+    size_t current_2 = match[1].start;
 
     std::stringstream cigar_parser(cigar);
     int length = -1;
@@ -205,12 +205,12 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     }
 
     // Set the alignment endpoints
-    output.end_1 = i;
-    output.end_2 = j;
-    output.length_1 = s1.length();
-    output.length_2 = s2.length();
+    output.match[0].end = i;
+    output.match[1].end = j;
+    output.length[0] = s1.length();
+    output.length[1] = s2.length();
 #ifdef DEBUG_OVERLAPPER
-    printf("Endpoints selected: (%d %d) with score %d\n", output.end_1, output.end_2, output.score);
+    printf("Endpoints selected: (%d %d) with score %d\n", output.match[0].end, output.match[1].end, output.score);
 #endif
 
     output.edit_distance = 0;
@@ -251,8 +251,8 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     }
 
     // Set the alignment startpoints
-    output.start_1 = i;
-    output.start_2 = j;
+    output.match[0].start = i;
+    output.match[1].start = j;
 
     // Compact the expanded cigar string into the canonical run length encoding
     // The backtracking produces a cigar string in reversed order, flip it

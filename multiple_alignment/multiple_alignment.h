@@ -123,7 +123,7 @@ class MultipleAlignment
                           const SequenceOverlap& overlap);
         
         // Insert a new gap into all sequences in the multiple alignment
-        // after the given column
+        // before the given column
         void insertGapBeforeColumn(size_t column_index);
 
         // Expand a cigar string by having one symbol per event instead
