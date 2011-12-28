@@ -274,7 +274,8 @@ void MultipleAlignment::_addSequence(const std::string& name,
     // Calculate the number of unfilled columns of the multiple alignment that come after
     // the padded sequence
     size_t incoming_trailing = template_element->getNumColumns() - padded_output.size() - incoming_leading;
-    m_sequences.push_back(MultipleAlignmentElement(name, padded_output, padded_quality, incoming_leading, incoming_trailing));
+    MultipleAlignmentElement incoming_element(name, padded_output, padded_quality, incoming_leading, incoming_trailing);
+    m_sequences.push_back(incoming_element);
 }
 
 //
