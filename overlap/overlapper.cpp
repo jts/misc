@@ -165,13 +165,13 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     // for the pair of strings. We start the backtracking from
     // that cell
     int max_row_value = std::numeric_limits<int>::min();
-    size_t max_row_index = 0;
     int max_column_value = std::numeric_limits<int>::min();
+    size_t max_row_index = 0;
     size_t max_column_index = 0;
 
     // Check every column of the last row
-    // Start from 1 to avoid making an empty alignment
-    // in the case that the best alignment is actually pretty poor
+    // Start from 1 to avoid making an empty alignment when the "best"
+    // alignment has a negative score
     for(size_t i = 1; i < num_columns; ++i) {
         int v = score_matrix[i][num_rows - 1];
         if(score_matrix[i][num_rows - 1] > max_row_value) {
@@ -182,7 +182,7 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
 
     // Check every row of the last column
     for(size_t j = 1; j < num_rows; ++j) {
-        int v = score_matrix[num_columns -1 ][j];
+        int v = score_matrix[num_columns - 1][j];
         if(v > max_column_value) {
             max_column_value = v;
             max_column_index = j;
@@ -204,9 +204,9 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
         output.score = max_row_value;
     }
 
-    // Set the alignment endpoints
-    output.match[0].end = i;
-    output.match[1].end = j;
+    // Set the alignment endpoints to be the index of the last aligned base
+    output.match[0].end = i - 1;
+    output.match[1].end = j - 1;
     output.length[0] = s1.length();
     output.length[1] = s2.length();
 #ifdef DEBUG_OVERLAPPER
