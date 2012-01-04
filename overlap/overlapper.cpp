@@ -49,6 +49,15 @@ double SequenceOverlap::getPercentIdentity() const
 }
 
 //
+std::ostream& operator<<(std::ostream& out, const SequenceOverlap& overlap)
+{
+    out << "[" << overlap.match[0].start << " " << overlap.match[0].end << "] ";
+    out << "[" << overlap.match[1].start << " " << overlap.match[1].end << "] ";
+    out << "C:" << overlap.cigar;
+    return out;
+}
+
+//
 void SequenceOverlap::printAlignment(const std::string& s1, const std::string& s2) const
 {
     assert(isValid());

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------
 // 
-// overlapper - String-string overlap algorithm 
+// overlapper - Functions to calculate overlaps between pairs of strings
 //
 // Copyright (C) 2011 Jared Simpson (jared.simpson@gmail.com)
 // 
@@ -27,6 +27,7 @@
 
 #include <string>
 #include <ostream>
+#include <assert.h>
 
 // A start/end coordinate pair representing
 // a subsequence. The end coordinate is
@@ -34,7 +35,20 @@
 struct SequenceInterval
 {
     // functions
+    
+    // Check that the interval is valid
     bool isValid() const { return start <= end; }
+    
+    // Change the interval to represent the same
+    // set of bases but on the opposite strand.
+    void flipStrand(int sequence_length)
+    {
+        assert(isValid());
+        int tmp = sequence_length - start - 1;
+        start = sequence_length - end - 1;
+        end = tmp;
+        assert(isValid());
+    }
 
     // data
     int start;
@@ -62,13 +76,7 @@ struct SequenceOverlap
     int getOverlapLength() const { return total_columns; }
 
     //
-    friend std::ostream& operator<<(std::ostream& out, const SequenceOverlap& overlap)
-    {
-        out << "[" << overlap.match[0].start << " " << overlap.match[0].end << "] ";
-        out << "[" << overlap.match[1].start << " " << overlap.match[1].end << "] ";
-        out << "C:" << overlap.cigar;
-        return out;
-    }
+    friend std::ostream& operator<<(std::ostream& out, const SequenceOverlap& overlap);
 
     // Data
 
