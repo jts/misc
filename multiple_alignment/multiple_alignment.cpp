@@ -328,7 +328,7 @@ std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int
     for(size_t c = start_column; c <= end_column; ++c) {
         std::vector<int> counts = getColumnBaseCounts(c);
 
-        char max_symbol;
+        char max_symbol = '\0';
         int max_count = -1;
         int total_depth = 0;
 
