@@ -37,6 +37,7 @@
 // MultipleAlignmentElement
 //
 
+//
 MultipleAlignmentElement::MultipleAlignmentElement(const std::string& _name, 
                                                    const std::string& _sequence,
                                                    const std::string& _quality,
@@ -73,7 +74,9 @@ char MultipleAlignmentElement::getColumnSymbol(size_t column_idx) const
 char MultipleAlignmentElement::getColumnQuality(size_t column_idx) const
 {
     assert(column_idx < getNumColumns());
-    if(padded_quality.empty() || column_idx < leading_columns || column_idx >= leading_columns + padded_quality.size()) {
+    if(padded_quality.empty() || 
+       column_idx < leading_columns || 
+       column_idx >= leading_columns + padded_quality.size()) {
         return '\0';
     }
     else {
@@ -169,9 +172,9 @@ void MultipleAlignment::addExtension(const std::string& incoming_name,
     _addSequence(incoming_name, incoming_sequence, incoming_quality, template_element, previous_incoming_overlap);
 }
 
-// Adds a new string into the multiple alignment using the 
-// padded sequence of an existing sequence to set up the new padded
-// string
+// Adds a new string into the multiple alignment using the overlap
+// between the incoming sequence and an existing sequence in the
+// multiple alignment to calculate the new padded string
 void MultipleAlignment::_addSequence(const std::string& name,
                                      const std::string& sequence,
                                      const std::string& quality, 
@@ -274,7 +277,9 @@ void MultipleAlignment::_addSequence(const std::string& name,
     // Calculate the number of unfilled columns of the multiple alignment that come after
     // the padded sequence
     size_t incoming_trailing = template_element->getNumColumns() - padded_output.size() - incoming_leading;
-    MultipleAlignmentElement incoming_element(name, padded_output, padded_quality, incoming_leading, incoming_trailing);
+    MultipleAlignmentElement incoming_element(name, padded_output, padded_quality, 
+                                              incoming_leading, incoming_trailing);
+
     m_sequences.push_back(incoming_element);
 }
 

@@ -29,6 +29,7 @@
 #include "overlapper.h"
 #include <vector>
 
+// Structure to hold a single entry in the multiple alignment
 struct MultipleAlignmentElement
 {
     // Functions
@@ -38,7 +39,8 @@ struct MultipleAlignmentElement
                              size_t leading, 
                              size_t trailing);
 
-    //
+    // Returns the total number of columns in the multiple alignment
+    // All elements in the alignment have the same number of columns
     size_t getNumColumns() const;
 
     // Returns the symbol for the requested column
@@ -48,7 +50,7 @@ struct MultipleAlignmentElement
     char getColumnSymbol(size_t column_idx) const;
 
     // Returns the quality symbol for the requested column
-    // If there is no quality information of column is in the leading/trailing segment
+    // If there is no quality information or the column is in the leading/trailing segment
     // this will return '\0'. Otherwise it will return a quality or a gap character
     char getColumnQuality(size_t column_idx) const;
 
@@ -75,6 +77,7 @@ struct MultipleAlignmentElement
 
 };
 
+//
 class MultipleAlignment
 {
     public:
@@ -106,7 +109,9 @@ class MultipleAlignment
                           const std::string& incoming_quality,
                           const SequenceOverlap& previous_incoming_overlap);
 
-        // Print the alignment to stdout
+        // Print the alignment to stdout. If the number of columns
+        // is greater than max_columns, it will be printed in multiple 
+        // segments
         void print(int max_columns = 120) const;
     
         // Print a pileup of the base symbol for each column of the alignment
