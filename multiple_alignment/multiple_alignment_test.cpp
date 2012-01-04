@@ -70,4 +70,5 @@ int main(int argc, char** argv)
     MultipleAlignment ma_1 = MultipleAlignmentBuilder::alignToFirst(test_sequences_1);
     ma_1.print();
     ma_1.printPileup();
+    ma_1.calculateBaseConsensus(3, 3);
 }

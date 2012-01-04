@@ -33,6 +33,9 @@
 
 //#define MA_DEBUG 1
 
+// Initialize static members
+const char* MultipleAlignment::m_alphabet = "ACGTN-";
+
 //
 // MultipleAlignmentElement
 //
@@ -55,6 +58,18 @@ MultipleAlignmentElement::MultipleAlignmentElement(const std::string& _name,
 size_t MultipleAlignmentElement::getNumColumns() const
 {
     return leading_columns + padded_sequence.size() + trailing_columns;
+}
+
+//
+size_t MultipleAlignmentElement::getStartColumn() const
+{
+    return leading_columns;
+}
+
+//
+size_t MultipleAlignmentElement::getEndColumn() const
+{
+    return getNumColumns() - trailing_columns - 1;
 }
 
 //
@@ -296,6 +311,76 @@ void MultipleAlignment::_addSequence(const std::string& name,
     m_sequences.push_back(incoming_element);
 }
 
+std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int min_trim_coverage)
+{
+    assert(!m_sequences.empty());
+    std::string consensus_sequence;
+    MultipleAlignmentElement& base_element = m_sequences.front();
+    size_t start_column = base_element.getStartColumn();
+    size_t end_column = base_element.getEndColumn();
+    
+    // This index records the last base in the consensus that had coverage greater than
+    // min_trim_coverage. After the consensus calculation the read is trimmed back to this position
+    int last_good_base = -1;
+
+    std::string printable = base_element.getPrintableSubstring(start_column, end_column - start_column + 1);
+
+    for(size_t c = start_column; c <= end_column; ++c) {
+        std::vector<int> counts = getColumnBaseCounts(c);
+
+        char max_symbol;
+        int max_count = -1;
+        int total_depth = 0;
+
+        std::cout << c << "\t";
+        for(size_t a = 0; a < m_alphabet_size; ++a) {
+            char symbol = m_alphabet[a];
+            total_depth += counts[a];
+
+            if(symbol != 'N' && counts[a] > max_count) {
+                max_symbol = symbol;
+                max_count = counts[a];
+            }
+            printf("%c:%d ", symbol, counts[a]);
+        }
+
+        char base_symbol = base_element.getColumnSymbol(c);
+        int base_count = counts[symbol2index(base_symbol)];
+        
+        // Choose a consensus base for this column. Only change a base
+        // if has been seen less than min_call_coverage times and the max
+        // base in the column has been seen more times than the base symbol
+        char consensus_symbol;
+        if(max_count > base_count && base_count < min_call_coverage)
+            consensus_symbol = max_symbol;
+        else
+            consensus_symbol = base_symbol;
+        
+        // Output a symbol to the consensus. Skip padding symbols and leading
+        // bases that are less than the minimum required depth to avoid trimming
+        if(consensus_symbol != '-' &&
+            (!consensus_sequence.empty() || total_depth >= min_trim_coverage))
+                consensus_sequence.push_back(consensus_symbol);
+
+        // Record the position of the last good base
+        if(total_depth >= min_trim_coverage) {
+            int consensus_index = consensus_sequence.size() - 1;
+            if(consensus_index > last_good_base)
+                last_good_base = consensus_index;
+        }
+        printf("CALL: %c\n", consensus_symbol);
+    }
+
+    if(last_good_base != -1)
+        consensus_sequence.erase(last_good_base);
+    else
+        consensus_sequence.clear();
+    std::cout << "Consensus: " << consensus_sequence << "\n";
+    printf("Good range: [0 %d]\n", last_good_base);
+
+    return consensus_sequence;
+}
+
 //
 void MultipleAlignment::print(size_t max_columns) const
 {
@@ -363,3 +448,39 @@ std::string MultipleAlignment::expandCigar(const std::string& cigar)
         out.append(length, symbol);
     return out;
 }
+
+//
+int MultipleAlignment::symbol2index(char symbol) const
+{
+    switch(symbol) {
+        case 'A':
+            return 0;
+        case 'C':
+            return 1;
+        case 'G':
+            return 2;
+        case 'T':
+            return 3;
+        case 'N':
+            return 4;
+        case '-':
+            return 5;
+    }
+
+    std::cerr << "Error: Unrecognized symbol in multiple alignment\n";
+    exit(EXIT_FAILURE);
+    return -1;
+}
+
+//
+std::vector<int> MultipleAlignment::getColumnBaseCounts(size_t idx) const
+{
+    std::vector<int> out(m_alphabet_size, 0);
+    for(size_t i = 0; i < m_sequences.size(); ++i) {
+        char symbol = m_sequences[i].getColumnSymbol(idx);
+        if(symbol != '\0')
+            out[symbol2index(symbol)] += 1;
+    }
+    return out;
+}
+
