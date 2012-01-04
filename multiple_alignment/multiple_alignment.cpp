@@ -139,6 +139,19 @@ std::string MultipleAlignmentElement::getUnpaddedSequence() const
 }
 
 //
+std::string MultipleAlignmentElement::getPrintableSubstring(size_t start_column, size_t num_columns) const
+{
+    std::string out;
+    size_t i = 0;
+    while(i < num_columns) {
+        char symbol = getColumnSymbol(start_column + i);
+        out.push_back(symbol != '\0' ? symbol : ' ');
+        ++i;
+    }
+    return out;
+}
+
+//
 // MultipleAlignment
 //
 
@@ -284,14 +297,22 @@ void MultipleAlignment::_addSequence(const std::string& name,
 }
 
 //
-void MultipleAlignment::print(int max_columns) const
+void MultipleAlignment::print(size_t max_columns) const
 {
-    (void)max_columns;
-    for(size_t i = 0; i < m_sequences.size(); ++i) {
-        std::string padding = std::string(m_sequences[i].leading_columns, ' ');
-        printf("\t%s%s\t%s\n", padding.c_str(),
-                               m_sequences[i].padded_sequence.c_str(), 
-                               m_sequences[i].name.c_str());
+    if(m_sequences.empty())
+        return;
+
+    size_t total_columns = m_sequences.front().getNumColumns();
+
+    // Print the multiple alignment in segments
+    for(size_t c = 0; c < total_columns; c += max_columns) {
+        size_t remaining = total_columns - c;
+        size_t slice_size = max_columns < remaining ? max_columns : remaining;
+        for(size_t i = 0; i < m_sequences.size(); ++i) {
+            std::string slice =  m_sequences[i].getPrintableSubstring(c, slice_size);
+            printf("\t%s\t%s\n", slice.c_str(), m_sequences[i].name.c_str());
+        }
+        printf("\n\n");
     }
 }
 

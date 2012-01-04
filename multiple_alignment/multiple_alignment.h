@@ -57,6 +57,11 @@ struct MultipleAlignmentElement
     // Returns the sequence with all padding characters removed
     std::string getUnpaddedSequence() const;
 
+    // Return a substring of this element that can be used to print the full multiple
+    // alignment. The leading/trailing columns will be returned as spaces so
+    // that all the elements line up.
+    std::string getPrintableSubstring(size_t start_column, size_t num_columns) const;
+
     // Returns the position in the padded string of the base at index idx of
     // the unpadded sequence.
     // Precondition: idx is less than the number of sequence bases
@@ -112,7 +117,7 @@ class MultipleAlignment
         // Print the alignment to stdout. If the number of columns
         // is greater than max_columns, it will be printed in multiple 
         // segments
-        void print(int max_columns = 120) const;
+        void print(size_t max_columns = 80) const;
     
         // Print a pileup of the base symbol for each column of the alignment
         void printPileup() const;
