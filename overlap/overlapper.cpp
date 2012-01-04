@@ -132,7 +132,7 @@ void SequenceOverlap::printAlignment(const std::string& s1, const std::string& s
 }
 
 //
-SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::string s2)
+SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::string& s2)
 {
     // Exit with invalid intervals if either string is zero length
     SequenceOverlap output;
@@ -146,7 +146,7 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     const int GAP_PENALTY = -5;
     const int MISMATCH_PENALTY = -3;
 
-    // We perform the dynamic programming one column at a time to avoid quadratic memory usage
+    // Initialize the scoring matrix
     size_t num_columns = s1.size() + 1;
     size_t num_rows = s2.size() + 1;
 
@@ -156,6 +156,7 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     for(size_t i = 0; i < score_matrix.size(); ++i)
         score_matrix[i].resize(num_rows);
 
+    // Calculate scores
     for(size_t i = 1; i < num_columns; ++i) {
         for(size_t j = 1; j < num_rows; ++j) {
             // Calculate the score for entry (i,j)
@@ -179,8 +180,7 @@ SequenceOverlap Overlapper::computeOverlap(const std::string& s1, const std::str
     size_t max_column_index = 0;
 
     // Check every column of the last row
-    // Start from 1 to avoid making an empty alignment when the "best"
-    // alignment has a negative score
+    // The first column is skipped to avoid empty alignments
     for(size_t i = 1; i < num_columns; ++i) {
         int v = score_matrix[i][num_rows - 1];
         if(score_matrix[i][num_rows - 1] > max_row_value) {

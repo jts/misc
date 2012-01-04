@@ -100,7 +100,7 @@ namespace Overlapper
 {
 
 // Compute the highest-scoring overlap between s1 and s2.
-SequenceOverlap computeOverlap(const std::string& s1, const std::string s2);
+SequenceOverlap computeOverlap(const std::string& s1, const std::string& s2);
 
 }
 
