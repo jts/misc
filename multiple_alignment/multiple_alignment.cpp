@@ -32,6 +32,7 @@
 #include <stdio.h>
 
 //#define MA_DEBUG 1
+//#define MA_DEBUG_CONSENSUS 1
 
 // Initialize static members
 const char* MultipleAlignment::m_alphabet = "ACGTN-";
@@ -332,7 +333,9 @@ std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int
         int max_count = -1;
         int total_depth = 0;
 
-        std::cout << c << "\t";
+#ifdef MA_DEBUG_CONSENSUS
+        printf("%zu\t", c);
+#endif
         for(size_t a = 0; a < m_alphabet_size; ++a) {
             char symbol = m_alphabet[a];
             total_depth += counts[a];
@@ -341,7 +344,9 @@ std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int
                 max_symbol = symbol;
                 max_count = counts[a];
             }
+#ifdef MA_DEBUG_CONSENSUS
             printf("%c:%d ", symbol, counts[a]);
+#endif
         }
 
         char base_symbol = base_element.getColumnSymbol(c);
@@ -368,15 +373,15 @@ std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int
             if(consensus_index > last_good_base)
                 last_good_base = consensus_index;
         }
+#ifdef MA_DEBUG_CONSENSUS
         printf("CALL: %c\n", consensus_symbol);
+#endif 
     }
 
     if(last_good_base != -1)
         consensus_sequence.erase(last_good_base);
     else
         consensus_sequence.clear();
-    std::cout << "Consensus: " << consensus_sequence << "\n";
-    printf("Good range: [0 %d]\n", last_good_base);
 
     return consensus_sequence;
 }
