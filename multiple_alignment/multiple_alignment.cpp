@@ -251,7 +251,7 @@ void MultipleAlignment::_addSequence(const std::string& name,
             // If we are in a incoming sequence insertion
             // (cigar D) then we are adding a base into a known
             // gap. Add the current incoming base to the output
-            if(expanded_cigar[cigar_index] == 'D') {
+            if(expanded_cigar[cigar_index] == 'I') {
                 padded_output.push_back(sequence[incoming_index]);
                 if(!quality.empty())
                     padded_quality.push_back(quality[incoming_index]);
@@ -281,7 +281,7 @@ void MultipleAlignment::_addSequence(const std::string& name,
                     template_index += 1;
                     cigar_index += 1;
                     break;
-                case 'D':
+                case 'I':
                     insertGapBeforeColumn(template_index + template_leading);
                     padded_output.push_back(sequence[incoming_index]);
                     if(!quality.empty())
@@ -291,7 +291,7 @@ void MultipleAlignment::_addSequence(const std::string& name,
                     cigar_index += 1;
                     template_index += 1; // skip the newly introduced gap
                     break;
-                case 'I':
+                case 'D':
                     padded_output.push_back('-');
                     if(!quality.empty())
                         padded_quality.push_back('-');
