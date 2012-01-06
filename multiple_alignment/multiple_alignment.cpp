@@ -324,8 +324,6 @@ std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int
     // min_trim_coverage. After the consensus calculation the read is trimmed back to this position
     int last_good_base = -1;
 
-    std::string printable = base_element.getPrintableSubstring(start_column, end_column - start_column + 1);
-
     for(size_t c = start_column; c <= end_column; ++c) {
         std::vector<int> counts = getColumnBaseCounts(c);
 
@@ -400,7 +398,10 @@ void MultipleAlignment::print(size_t max_columns) const
         size_t slice_size = max_columns < remaining ? max_columns : remaining;
         for(size_t i = 0; i < m_sequences.size(); ++i) {
             std::string slice =  m_sequences[i].getPrintableSubstring(c, slice_size);
-            printf("\t%s\t%s\n", slice.c_str(), m_sequences[i].name.c_str());
+
+            // Check if this string is blank, if so don't print it
+            if(slice.find_first_not_of(" ") != std::string::npos)
+                printf("\t%s\t%s\n", slice.c_str(), m_sequences[i].name.c_str());
         }
         printf("\n\n");
     }
