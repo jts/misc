@@ -115,6 +115,9 @@ namespace Overlapper
 // This is a naive O(M*N) algorithm
 SequenceOverlap computeOverlap(const std::string& s1, const std::string& s2);
 
+// Extend a match between s1 and s2 into a full overlap using banded dynamic programming
+SequenceOverlap extendMatch(const std::string& s1, const std::string& s2, SequenceOverlap seed_match, int bandwidth);
+
 }
 
 #endif
