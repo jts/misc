@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-Wall -Werror
+CXXFLAGS=-Wall -Werror -g
 
 overlapper-test: overlapper.o overlapper-test.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^

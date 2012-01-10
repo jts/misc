@@ -97,16 +97,13 @@ int main(int argc, char** argv)
     std::cout << read_34 << "\n\n";
     read_34.printAlignment(read_3, read_4);
 
-    // Test the extension function
-    SequenceOverlap tmp;
-    tmp.match[0].start = 1;
-    tmp.match[0].end = 11;
-    tmp.match[1].start = 0;
-    tmp.match[1].end = 10;
-    tmp.score = 30;
-    tmp.cigar = "10M";
+    //SequenceOverlap extended = Overlapper::extendMatch(read_3, read_4, 1, 0, 10);
+    //extended.printAlignment(read_3, read_4);
 
-    SequenceOverlap extended = Overlapper::extendMatch(read_3, read_4, tmp, 10);
-    extended.printAlignment(read_3, read_4);
+    std::string read_5 = "CAATGCCCCCCCCCCCGCAGGGGGGGAGGGGGGGGGGCTGCTTTTTTTTTTAATAAAAAAAAAATTTTTTTTTTACGTCTGTTTTTTTCACGGGGGGGGGTTTTTATTTTTCTCCCCCCCCGTGAGTCAGCGTTATCTTTTTTCTTTTTTGCTGACCGACCCCCCAGTTCACGCACCCCCGCCCATCACGCTGACACCCCGGCAACCCCAACCCCAACCCCAACACCCCGCCCCGAGCCAAACCCAATTAGCGCCCCTGCAGAGACCGTTGCCCCGCCCCTCCTTACAGTTAACATCCCGGTTTTCTCC";
+    std::string read_6 = "GACTGACAGACGCAGCGCGCCCGTCAGCAATGCCCCGCAGGAGGCTGCTTTAATAAAATTACGTCTGTTCACGGTTATTCTCCCCGTGAGTCAGCGTTATCTTTCTTTTGCTGACGACCCAGTTCACGCACCGCCATCACGCTGACACCGCAACCAACCCAACCACAACCGCCGAGCCAACCAATCAGGCAGCCCTAGACTCGCCATCGAGAGCCGC";
+    SequenceOverlap overlap_r56 = Overlapper::extendMatch(read_5, read_6, 117, 81, 20);
+//    SequenceOverlap overlap_r56 = Overlapper::computeOverlap(read_5, read_6);
+    overlap_r56.printAlignment(read_5, read_6);
         //Overlapper::computeOverlap(read_3, read_4);
 }
