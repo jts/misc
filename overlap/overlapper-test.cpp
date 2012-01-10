@@ -90,10 +90,23 @@ int main(int argc, char** argv)
     std::cout << read_12 << "\n\n";
     read_12.printAlignment(read_1, read_2);
 
-    std::string read_4 = "TCTACTAATTGTATGTGCCACAGTATATTTATCGTTAGTTTTTAAAAACCACAATACTAAATACCTTGTTAAGTCCTGATCAATTTGGTCTGGACATCCA";
-    std::string read_3 = "TTCTACTAATTGTATGTGCCACAGTATATTTATCGTTAGTTTTTAAAAACCACAATACTAAATACCTTGTTAAGTCCTGATCAATTTGGTCTGGACATCC";
+    std::string read_3 = "TTCTACTAATTGTATGTGCCACAGTATATTTATCGTTAGTTTTTAAAACCACAATACTAAATACCTTGTTAAGTCCTGATCAATTTGGTCTGGACATCT";
+    std::string read_4 = "TCTACTAATTGTATGTGCCACAGTATATTTATCGTTAGTTTTTAAAAACCACAATACTAAATACCTTGTTAAGTCCTGATCAATTTGGTCTGACATCCA";
 
     SequenceOverlap read_34 = Overlapper::computeOverlap(read_3, read_4);
     std::cout << read_34 << "\n\n";
     read_34.printAlignment(read_3, read_4);
+
+    // Test the extension function
+    SequenceOverlap tmp;
+    tmp.match[0].start = 1;
+    tmp.match[0].end = 11;
+    tmp.match[1].start = 0;
+    tmp.match[1].end = 10;
+    tmp.score = 30;
+    tmp.cigar = "10M";
+
+    SequenceOverlap extended = Overlapper::extendMatch(read_3, read_4, tmp, 10);
+    extended.printAlignment(read_3, read_4);
+        //Overlapper::computeOverlap(read_3, read_4);
 }
