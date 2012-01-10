@@ -377,7 +377,7 @@ std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int
     }
 
     if(last_good_base != -1)
-        consensus_sequence.erase(last_good_base);
+        consensus_sequence.erase(last_good_base + 1);
     else
         consensus_sequence.clear();
 
