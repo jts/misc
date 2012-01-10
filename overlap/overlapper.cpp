@@ -35,6 +35,7 @@
 //
 #define max3(x,y,z) std::max(std::max(x,y), z)
 //#define DEBUG_OVERLAPPER 1
+//#define DEBUG_EXTEND 1
 
 //
 bool SequenceOverlap::isValid() const
@@ -312,7 +313,8 @@ inline int _getBandedCellScore(const DPCells& cells, int i, int j, int band_widt
     return (band_row_index >= 0 && band_row_index < band_width) ? cells[i * band_width + band_row_index] : invalid_score;
 }
 
-SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string& s2, SequenceOverlap seed_match, int band_width)
+SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string& s2, 
+                                        int start_1, int start_2, int band_width)
 {
     SequenceOverlap output;
     int num_columns = s1.size() + 1;
@@ -337,22 +339,31 @@ SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string
     // column of the multiple alignment. These are calculated by
     // projecting the match diagonal onto the first column. It is possible
     // that these are negative.
-    int band_center = seed_match.match[1].start - seed_match.match[0].start + 1;
+    int band_center = start_2 - start_1 + 1;
     int band_origin = band_center - (half_width + 1);
-    printf("Match start: [%d %d]\n", seed_match.match[0].start, seed_match.match[1].start);
+#ifdef DEBUG_EXTEND
+    printf("Match start: [%d %d]\n", start_1, start_2);
     printf("Band center, origin: [%d %d]\n", band_center, band_origin);
     printf("Num cells: %zu\n", cells.size());
-
+#endif
 
     // Fill in the bands column by column
     for(int i = 1; i < num_columns; ++i) {
         int j = band_origin + i; // start row of this band
         int end_row = j + band_width;
 
+        // Trim band coordinates to only compute valid positions
         if(j < 1)
             j = 1;
         if(end_row > num_rows)
             end_row = num_rows;
+
+        if(end_row <= 0 || j >= num_rows || j >= end_row)
+            continue; // nothing to do for this column
+
+#ifdef DEBUG_EXTEND
+        printf("Filling column %d rows [%d %d]\n", i, j, end_row);
+#endif
 
         // Fill in this band. To avoid the need to perform many tests whether a particular cell
         // is stored in a band, we do some of the calculations outside of the main loop below. 
@@ -366,11 +377,17 @@ SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string
         int left_idx = _getBandedCellIndex(i - 1, j, band_width, band_origin);
         int diagonal_idx = _getBandedCellIndex(i - 1, j - 1, band_width, band_origin);
         int diagonal_score = cells[diagonal_idx] + (s1[i - 1] == s2[j - 1] ? MATCH_SCORE : MISMATCH_PENALTY);
-        int left_score = cells[left_idx] + GAP_PENALTY;
+        int left_score = left_idx != -1 ? cells[left_idx] + GAP_PENALTY : INVALID_SCORE;
         int up_score = 0;
 
         // Set the first row score
         cells[curr_idx] = std::max(left_score, diagonal_score);
+
+#ifdef DEBUG_EXTEND
+        printf("Filled [%d %d] = %d\n", i , j, cells[curr_idx]);
+        assert(_getBandedCellIndex(i,j, band_width, band_origin) != -1);
+        assert(diagonal_idx != -1);
+#endif
 
         // Update indices
         curr_idx += 1;
@@ -381,19 +398,21 @@ SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string
         // Fill in the main part of the band, stopping before the last row
         while(j < end_row - 1) {
 
-            /*
-            printf("Filling [%d %d]\n", i , j);
-            printf("DI: %d CDI: %d\n", diagonal_idx, _getBandedCellIndex(i - 1, j - 1, band_width, band_origin));
+#ifdef DEBUG_EXTEND
             assert(diagonal_idx == _getBandedCellIndex(i - 1, j - 1, band_width, band_origin));
             assert(left_idx == _getBandedCellIndex(i - 1, j, band_width, band_origin));
             assert(curr_idx - 1 == _getBandedCellIndex(i, j - 1, band_width, band_origin));
-            */
+#endif
 
             diagonal_score = cells[diagonal_idx] + (s1[i - 1] == s2[j - 1] ? MATCH_SCORE : MISMATCH_PENALTY);
             left_score = cells[left_idx] + GAP_PENALTY;
             up_score = cells[curr_idx - 1] + GAP_PENALTY;
             cells[curr_idx] = max3(diagonal_score, left_score, up_score);
 
+#ifdef DEBUG_EXTEND
+            printf("Filled [%d %d] = %d\n", i , j, cells[curr_idx]);
+            assert(_getBandedCellIndex(i,j, band_width, band_origin) != -1);
+#endif
             // Update indices
             curr_idx += 1;
             left_idx += 1;
@@ -402,9 +421,15 @@ SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string
         }
 
         // Fill in last row, here we ignore the left cell which is now out of band
-        diagonal_score = cells[diagonal_idx] + (s1[i - 1] == s2[j - 1] ? MATCH_SCORE : MISMATCH_PENALTY);
-        up_score = cells[curr_idx - 1] + GAP_PENALTY;
-        cells[curr_idx] = std::max(diagonal_score, up_score);
+        if(j != end_row) {
+            diagonal_score = cells[diagonal_idx] + (s1[i - 1] == s2[j - 1] ? MATCH_SCORE : MISMATCH_PENALTY);
+            up_score = cells[curr_idx - 1] + GAP_PENALTY;
+            cells[curr_idx] = std::max(diagonal_score, up_score);
+#ifdef DEBUG_EXTEND
+            printf("Filled [%d %d] = %d\n", i , j, cells[curr_idx]);
+            assert(_getBandedCellIndex(i,j, band_width, band_origin) != -1);
+#endif        
+        }
     }
 
     // The location of the highest scoring match in the
@@ -450,7 +475,9 @@ SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string
         output.score = max_row_value;
     }    
 
+#ifdef DEBUG_EXTEND
     printf("BEST: %zu %zu\n", i, j);
+#endif
 
     // Backtrack to fill in the cigar string and alignment start position
     // Set the alignment endpoints to be the index of the last aligned base
@@ -458,7 +485,7 @@ SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string
     output.match[1].end = j - 1;
     output.length[0] = s1.length();
     output.length[1] = s2.length();
-#ifdef DEBUG_OVERLAPPER
+#ifdef DEBUG_EXTEND
     printf("Endpoints selected: (%d %d) with score %d\n", output.match[0].end, output.match[1].end, output.score);
 #endif
 
