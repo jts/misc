@@ -50,6 +50,14 @@ struct SequenceInterval
         assert(isValid());
     }
 
+    // Returns the length of the interval
+    // The interval must be valid
+    int length() const
+    {
+        assert(isValid());
+        return end - start + 1;
+    }
+
     // data
     int start;
     int end; // inclusive
