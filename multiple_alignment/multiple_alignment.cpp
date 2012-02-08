@@ -24,12 +24,14 @@
 // SOFTWARE.
 // ------------------------------------------------------------------------------
 #include "multiple_alignment.h"
+#include <math.h>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <cstdlib>
 #include <assert.h>
 #include <stdio.h>
+#include <limits>
 
 //#define MA_DEBUG 1
 //#define MA_DEBUG_CONSENSUS 1
@@ -385,6 +387,149 @@ std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int
 }
 
 //
+void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_sequence, std::string* consensus_quality)
+{
+#ifdef MA_DEBUG_CONSENSUS
+    print();
+#endif
+    assert(!m_sequences.empty());
+
+    consensus_sequence->clear();
+    consensus_quality->clear();
+
+    // Probability of emitting a gap symbol when there is a true
+    // nucleotide in the sequence.
+    const double PROBABILTY_GAP = 0.0001;
+
+    MultipleAlignmentElement& base_element = m_sequences.front();
+    size_t start_column = base_element.getStartColumn();
+    size_t end_column = base_element.getEndColumn();
+    
+    for(size_t c = start_column; c <= end_column; ++c) {
+        std::vector<int> counts = getColumnBaseCounts(c);
+
+        std::vector<double> likelihoods(m_alphabet_size, 0.0f);
+        std::string pileup;
+        std::string quality_pileup;
+
+        for(size_t a = 0; a < m_alphabet_size; ++a) {
+            char a_symbol = m_alphabet[a];
+
+            // Calculate the likelihood of the data given the true base is a
+            for(size_t i = 0; i < m_sequences.size(); ++i) {
+                char b = m_sequences[i].getColumnSymbol(c);
+                char q = m_sequences[i].getColumnQuality(c);
+                if(b == '\0')
+                    continue; // no base at this position
+
+                assert(q != '\0');
+
+                // Handle gap
+                double p_error = 0.0;
+                if(b == '-' || a_symbol == '-')
+                    p_error = PROBABILTY_GAP;
+                else
+                    p_error = quality2prob(q);
+
+                if(b == a_symbol)
+                    likelihoods[a] += log(1 - p_error);
+                else
+                    likelihoods[a] += log(p_error/3);
+
+                // hack
+                if(a == 0) {
+                    pileup.push_back(b);
+                    quality_pileup.push_back(q);
+                }
+            }
+        }
+
+        // Calculate most likely symbol
+        char call_symbol = 'N';
+        double max_likelihood = -std::numeric_limits<double>::max();
+        double sum_probability = 0.0f;
+
+        for(size_t a = 0; a < m_alphabet_size; ++a) {
+            if(likelihoods[a] > max_likelihood) {
+                call_symbol = m_alphabet[a];
+                max_likelihood = likelihoods[a];
+            }
+            sum_probability += exp(likelihoods[a]);
+        }
+
+        double p_consensus_error = 1.0f - (exp(max_likelihood) / sum_probability);
+        char quality_symbol = prob2quality(p_consensus_error);
+
+#ifdef MA_DEBUG_CONSENSUS
+        // Print stats
+        printf("Likelihoods:");
+        for(size_t a = 0; a < m_alphabet_size; ++a) {
+            char a_symbol = m_alphabet[a];
+            printf("%c=%.2lf ", a_symbol, likelihoods[a]);
+        }
+        printf(" Call: %c Perror: %.8lf Qscore: %c Pileup: %s Quality: %s\n", call_symbol, p_consensus_error, quality_symbol, pileup.c_str(), quality_pileup.c_str());
+#endif
+        // Output a symbol to the consensus. Skip padding symbols and leading
+        // bases that are less than the minimum required depth to avoid trimming
+        if(call_symbol != '-') {
+            consensus_sequence->push_back(call_symbol);
+            consensus_quality->push_back(quality_symbol);
+        }
+    }
+}
+
+
+//
+void MultipleAlignment::filterByCount(int min_count)
+{
+    assert(!m_sequences.empty());
+    MultipleAlignmentElement& base_element = m_sequences.front();
+    size_t start_column = base_element.getStartColumn();
+    size_t end_column = base_element.getEndColumn();
+
+    // A vector to record which sequences pass the filter.
+    // keep_vector[i] == 1 means that sequence i should be kept.
+    std::vector<bool> keep_vector(m_sequences.size(), 1);
+
+    for(size_t c = start_column; c <= end_column; ++c) {
+        std::vector<int> counts = getColumnBaseCounts(c);
+        char base_symbol = base_element.getColumnSymbol(c);
+        int base_count = counts[symbol2index(base_symbol)];
+        int num_above_min = 0;
+
+        for(size_t a = 0; a < m_alphabet_size; ++a) {
+            if(counts[a] >= min_count)
+                num_above_min += 1;
+        }
+
+        if(num_above_min > 1 && base_count >= min_count) {
+            //printf("Column %zu is conflicted: %s\n", c, getColumnCountString(c).c_str());
+            // This column is conflicted. Update keep_vector.
+            for(size_t i = 1; i < m_sequences.size(); ++i) {
+                char symbol = m_sequences[i].getColumnSymbol(c);
+
+                // Remove this sequence if it overlaps the conflicted column,
+                // if it does not match the base sequence, and its base count is greater
+                // than the threshold
+                if(symbol != '\0' && symbol != base_symbol && counts[symbol2index(symbol)] >= min_count)
+                    keep_vector[i] = 0;
+            }
+        }
+    }
+
+    // Erase elements from the vector
+    std::vector<MultipleAlignmentElement> filtered_sequences;
+    for(size_t i = 0; i < m_sequences.size(); ++i) {
+        if(keep_vector[i])
+            filtered_sequences.push_back(m_sequences[i]);
+    }
+
+//    printf("Before filter: %zu\n", m_sequences.size());
+    m_sequences.swap(filtered_sequences);
+//    printf("After filter: %zu\n", m_sequences.size());
+}
+
+//
 void MultipleAlignment::print(size_t max_columns) const
 {
     if(m_sequences.empty())
@@ -477,6 +622,27 @@ int MultipleAlignment::symbol2index(char symbol) const
     std::cerr << "Error: Unrecognized symbol in multiple alignment\n";
     exit(EXIT_FAILURE);
     return -1;
+}
+
+//
+double MultipleAlignment::quality2prob(char q) const
+{
+    assert(q != '\0');
+    return pow(10, -(q - 33)/10.0f);
+}
+
+//
+char MultipleAlignment::prob2quality(double p) const
+{
+    int phred = 0;
+    double lp = log10(p);
+
+    // Clamp really low phred scores at Q60
+    if(lp < -10.0)
+        phred = 60;
+    else
+        phred = (int)-10 * lp;
+    return phred + 33;
 }
 
 //

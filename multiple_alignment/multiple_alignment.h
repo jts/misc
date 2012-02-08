@@ -123,7 +123,16 @@ class MultipleAlignment
         // Leading/trailing bases are trimmed from the consensus sequence if there is less than
         // min_trim_coverage depth at the ends of the base sequence.
         std::string calculateBaseConsensus(int min_call_coverage, int min_trim_coverage);
-        
+
+        // Calculate consensus sequence that maximizes the likelihood of the multiple alignment
+        void calculateBaseConsensusLikelihood(std::string* consensus_sequence, std::string* consensus_quality);
+
+        // Filter out sequences in the multiple alignment by finding columns with a discrepant
+        // consensus base. If two bases in a given column have count more than min_count,
+        // then we call a column conflicted and remove the sequences that do not match the base
+        // sequence at this column.
+        void filterByCount(int min_count);
+
         // Returns a formatted string with the number of times each base has been seen for the given column
         std::string getColumnCountString(size_t column) const; 
 
@@ -156,6 +165,12 @@ class MultipleAlignment
         // Returns the index of a symbol over the alphabet "ACGTN-"
         int symbol2index(char symbol) const;
         
+        // Return the probability that a base call is incorrect, given a Phred-33 ascii character
+        double quality2prob(char q) const;
+        
+        // Return a phred+33 scaled quality character for this probability
+        char prob2quality(double p) const;
+
         // Return a vector of counts for each base call for the given column
         std::vector<int> getColumnBaseCounts(size_t idx) const;
 
