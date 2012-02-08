@@ -649,11 +649,13 @@ char MultipleAlignment::prob2quality(double p) const
     int phred = 0;
     double lp = log10(p);
 
-    // Clamp really low phred scores at Q60
     if(lp < -10.0)
         phred = 60;
     else
         phred = (int)-10 * lp;
+
+    phred = std::min(phred, 60);
+    assert(phred >= 0 && phred <= 60);
     return phred + 33;
 }
 
