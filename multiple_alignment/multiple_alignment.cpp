@@ -399,7 +399,7 @@ void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_
 
     // Probability of emitting a gap symbol when there is a true
     // nucleotide in the sequence.
-    const double PROBABILTY_GAP = 0.0001;
+    const double PROBABILITY_GAP = 0.0001;
 
     MultipleAlignmentElement& base_element = m_sequences.front();
     size_t start_column = base_element.getStartColumn();
@@ -415,38 +415,45 @@ void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_
         std::string quality_pileup;
 #endif
 
-        for(size_t a = 0; a < m_alphabet_size; ++a) {
-            char a_symbol = m_alphabet[a];
 
-            // Calculate the likelihood of the data given the true base is a
-            for(size_t i = 0; i < m_sequences.size(); ++i) {
-                char b = m_sequences[i].getColumnSymbol(c);
-                char q = m_sequences[i].getColumnQuality(c);
-                if(b == '\0')
-                    continue; // no base at this position
+        // Calculate the likelihood of the data given the true base is a
+        for(size_t i = 0; i < m_sequences.size(); ++i) {
+            char b = m_sequences[i].getColumnSymbol(c);
+            char q = m_sequences[i].getColumnQuality(c);
+            
+            if(b == '\0')
+                continue; // no base at this position, skip
+            assert(q != '\0');
 
-                assert(q != '\0');
+            // Calculate likelihoods.
+            double p_error;
+            if(b != '-')
+                p_error = quality2prob(q);
+            else
+                p_error = PROBABILITY_GAP;
 
-                // Handle gap
-                double p_error = 0.0;
-                if(b == '-' || a_symbol == '-')
-                    p_error = PROBABILTY_GAP;
+            // The probabilty the base call is correct.
+            double p_match = 1.0f - p_error;
+            double lp_match = log(p_match);
+
+            // The true underlying base is different than base call. 
+            // We don't have quality scores for all possible calls so we use p_error / 3
+            double p_mismatch = p_error / 3;
+            double lp_mismatch = log(p_mismatch);
+
+            // Update likelihoods
+            for(size_t a = 0; a < m_alphabet_size; ++a) {
+                char a_symbol = m_alphabet[a];
+                if(a_symbol == b)
+                    likelihoods[a] += lp_match;
                 else
-                    p_error = quality2prob(q);
-
-                if(b == a_symbol)
-                    likelihoods[a] += log(1 - p_error);
-                else
-                    likelihoods[a] += log(p_error/3);
+                    likelihoods[a] += lp_mismatch;
+            }
 
 #ifdef MA_DEBUG_CONSENSUS
-                // debugging hack
-                if(a == 0) {
-                    pileup.push_back(b);
-                    quality_pileup.push_back(q);
-                }
+            pileup.push_back(b);
+            quality_pileup.push_back(q);
 #endif
-            }
         }
 
         // Calculate most likely symbol
