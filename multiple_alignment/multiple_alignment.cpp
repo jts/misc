@@ -415,8 +415,7 @@ void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_
         std::string quality_pileup;
 #endif
 
-
-        // Calculate the likelihood of the data given the true base is a
+        // Update likelihoods using every sequence with a base aligned in this column.
         for(size_t i = 0; i < m_sequences.size(); ++i) {
             char b = m_sequences[i].getColumnSymbol(c);
             char q = m_sequences[i].getColumnQuality(c);
