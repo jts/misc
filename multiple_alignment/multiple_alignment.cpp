@@ -409,8 +409,11 @@ void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_
         std::vector<int> counts = getColumnBaseCounts(c);
 
         std::vector<double> likelihoods(m_alphabet_size, 0.0f);
+
+#ifdef MA_DEBUG_CONSENSUS
         std::string pileup;
         std::string quality_pileup;
+#endif
 
         for(size_t a = 0; a < m_alphabet_size; ++a) {
             char a_symbol = m_alphabet[a];
@@ -436,11 +439,13 @@ void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_
                 else
                     likelihoods[a] += log(p_error/3);
 
-                // hack
+#ifdef MA_DEBUG_CONSENSUS
+                // debugging hack
                 if(a == 0) {
                     pileup.push_back(b);
                     quality_pileup.push_back(q);
                 }
+#endif
             }
         }
 
