@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <limits>
+#include <algorithm>
 
 //#define MA_DEBUG 1
 //#define MA_DEBUG_CONSENSUS 1
@@ -594,6 +595,22 @@ void MultipleAlignment::filterByCount(int min_count)
 //    printf("After filter: %zu\n", m_sequences.size());
 }
 
+// Order the indices of the m_sequences vector by left-coordinate of the alignment on m_sequence[0]
+struct SequencePrintOrder
+{
+    SequencePrintOrder(const std::vector<MultipleAlignmentElement>& sequence) : m_sequences(sequence) {}
+    bool operator()(size_t i, size_t j)
+    {
+        if(i == 0)
+            return true;
+        if(j == 0)
+            return false;
+        return m_sequences[i].leading_columns < m_sequences[j].leading_columns;
+    }
+    private:
+        const std::vector<MultipleAlignmentElement>& m_sequences;
+};
+
 //
 void MultipleAlignment::print(size_t max_columns) const
 {
@@ -602,20 +619,31 @@ void MultipleAlignment::print(size_t max_columns) const
 
     size_t total_columns = m_sequences.front().getNumColumns();
 
+    std::vector<size_t> sequence_index_order(m_sequences.size(), 0);
+    // Initialize order
+    for(size_t i = 0; i < sequence_index_order.size(); ++i)
+        sequence_index_order[i] = i;
+
+    // Sort sequences by the first aligned base on sequence[0]
+    SequencePrintOrder sorter(m_sequences);
+    std::stable_sort(sequence_index_order.begin(), sequence_index_order.end(), sorter);
+
     // Print the multiple alignment in segments
     for(size_t c = 0; c < total_columns; c += max_columns) {
         size_t remaining = total_columns - c;
         size_t slice_size = max_columns < remaining ? max_columns : remaining;
-        for(size_t i = 0; i < m_sequences.size(); ++i) {
+        for(size_t i = 0; i < sequence_index_order.size(); ++i) {
+            size_t current_index = sequence_index_order[i];
+
             // Build the output string
             std::string print_string;
             for(size_t j = c; j < slice_size; ++j) {
                 char base_symbol = m_sequences[0].getColumnSymbol(j);
-                char row_symbol = m_sequences[i].getColumnSymbol(j);
+                char row_symbol = m_sequences[current_index].getColumnSymbol(j);
 
                 if(row_symbol == '\0')
                     print_string.push_back(' '); // no base for this column
-                else if(i == 0 || row_symbol == '-' || row_symbol != base_symbol)
+                else if(current_index == 0 || row_symbol == '-' || row_symbol != base_symbol)
                     print_string.push_back(row_symbol); // always show sequence for row 0, gaps and mismatches
                 else
                     print_string.push_back('.'); // mask matches
@@ -717,7 +745,7 @@ char MultipleAlignment::prob2quality(double p) const
     if(lp < -10.0)
         phred = 60;
     else
-        phred = (int)-10 * lp;
+        phred = (int)(-10 * lp);
 
     // Clamp score into range
     phred = std::max(0, phred);
