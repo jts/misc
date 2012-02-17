@@ -489,6 +489,60 @@ void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_
     }
 }
 
+void MultipleAlignment::filterByMismatchQuality(int max_sum_mismatch)
+{
+
+    assert(!m_sequences.empty());
+    MultipleAlignmentElement& base_element = m_sequences.front();
+    size_t start_column = base_element.getStartColumn();
+    size_t end_column = base_element.getEndColumn();
+
+    int GAP_PENALTY = 30;
+
+    // A vector to record the total phred scores of mismatching bases
+    std::vector<int> scores(m_sequences.size(), 0);
+
+    for(size_t c = start_column; c <= end_column; ++c) {
+        char base_symbol = base_element.getColumnSymbol(c);
+        char base_quality = base_element.getColumnQuality(c);
+
+        for(size_t i = 1; i < m_sequences.size(); ++i) {
+            char symbol = m_sequences[i].getColumnSymbol(c);
+            char quality = m_sequences[i].getColumnQuality(c);
+
+            if(symbol != '\0' && symbol != base_symbol) {
+                // This is a mismatch
+                if(symbol == '-' || base_symbol == '-')
+                    scores[i] += GAP_PENALTY;
+                else
+                    scores[i] += std::min(int(quality) - 33, int(base_quality) - 33);
+            }
+        }
+    }
+
+    // A vector to record which sequences pass the filter.
+    // keep_vector[i] == 1 means that sequence i should be kept.
+    std::vector<bool> keep_vector(m_sequences.size(), 1);
+
+//    print(400);
+    for(size_t i = 1; i < m_sequences.size(); ++i) {
+        if(scores[i] > max_sum_mismatch)
+            keep_vector[i] = 0;
+//        printf("%zu s:%d\n", i, scores[i]);
+    }   
+
+    // Erase elements from the vector
+    std::vector<MultipleAlignmentElement> filtered_sequences;
+    for(size_t i = 0; i < m_sequences.size(); ++i) {
+        if(keep_vector[i])
+            filtered_sequences.push_back(m_sequences[i]);
+    }
+
+//    printf("Before filter: %zu\n", m_sequences.size());
+    m_sequences.swap(filtered_sequences);
+//    printf("After filter: %zu\n", m_sequences.size());
+
+}
 
 //
 void MultipleAlignment::filterByCount(int min_count)
@@ -553,11 +607,22 @@ void MultipleAlignment::print(size_t max_columns) const
         size_t remaining = total_columns - c;
         size_t slice_size = max_columns < remaining ? max_columns : remaining;
         for(size_t i = 0; i < m_sequences.size(); ++i) {
-            std::string slice =  m_sequences[i].getPrintableSubstring(c, slice_size);
+            // Build the output string
+            std::string print_string;
+            for(size_t j = c; j < slice_size; ++j) {
+                char base_symbol = m_sequences[0].getColumnSymbol(j);
+                char row_symbol = m_sequences[i].getColumnSymbol(j);
 
+                if(row_symbol == '\0')
+                    print_string.push_back(' '); // no base for this column
+                else if(i == 0 || row_symbol == '-' || row_symbol != base_symbol)
+                    print_string.push_back(row_symbol); // always show sequence for row 0, gaps and mismatches
+                else
+                    print_string.push_back('.'); // mask matches
+            }
             // Check if this string is blank, if so don't print it
-            if(slice.find_first_not_of(" ") != std::string::npos)
-                printf("\t%s\t%s\n", slice.c_str(), m_sequences[i].name.c_str());
+            if(print_string.find_first_not_of(" ") != std::string::npos)
+                printf("\t%s\t%s\n", print_string.c_str(), m_sequences[i].name.c_str());
         }
         printf("\n\n");
     }

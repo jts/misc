@@ -133,6 +133,9 @@ class MultipleAlignment
         // sequence at this column.
         void filterByCount(int min_count);
 
+        // Filter out sequences by the total weight of quality mismatches
+        void filterByMismatchQuality(int max_sum_mismatch);
+
         // Returns a formatted string with the number of times each base has been seen for the given column
         std::string getColumnCountString(size_t column) const; 
 
