@@ -355,9 +355,6 @@ void MultipleAlignment::_addSequence(const std::string& name,
         // currently in the multiple alignment. Otherwise this sequence is a containment
         // and we can not deal with it.
         size_t incoming_columns = padded_output.size() + incoming_leading;
-
-        overlap.printAlignment(template_element->getUnpaddedSequence(), sequence);
-
         assert(incoming_columns >= m_sequences.front().getNumColumns());
 
         // Extend all other sequences to have the same number of columns as the incoming sequence
