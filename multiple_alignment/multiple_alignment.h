@@ -41,18 +41,41 @@ struct MultipleAlignmentElement
 
     // Returns the total number of columns in the multiple alignment
     // All elements in the alignment have the same number of columns
-    size_t getNumColumns() const;
+    inline size_t getNumColumns() const
+    {
+        return leading_columns + padded_sequence.size() + trailing_columns;
+    }
 
     // Returns the symbol for the requested column
     // If the column is in the leading/trailing segment
     // this will return '\0'. Otherwise it will return a base
     // or a gap character
-    char getColumnSymbol(size_t column_idx) const;
+    inline char getColumnSymbol(size_t column_idx) const
+    {
+        assert(column_idx < getNumColumns());
+        if(column_idx < leading_columns || column_idx >= leading_columns + padded_sequence.size()) {
+            return '\0';
+        } else {
+            assert(column_idx - leading_columns < padded_sequence.size());
+            return padded_sequence[column_idx - leading_columns];
+        }
+    }
 
     // Returns the quality symbol for the requested column
     // If there is no quality information or the column is in the leading/trailing segment
     // this will return '\0'. Otherwise it will return a quality or a gap character
-    char getColumnQuality(size_t column_idx) const;
+    inline char getColumnQuality(size_t column_idx) const
+    {
+        assert(column_idx < getNumColumns());
+        if(padded_quality.empty() || 
+           column_idx < leading_columns || 
+           column_idx >= leading_columns + padded_quality.size()) {
+            return '\0';
+        } else {
+            assert(column_idx - leading_columns < padded_sequence.size());
+            return padded_quality[column_idx - leading_columns];
+        }
+    }
 
     // Returns the sequence with all padding characters removed
     std::string getUnpaddedSequence() const;

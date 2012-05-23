@@ -59,12 +59,6 @@ MultipleAlignmentElement::MultipleAlignmentElement(const std::string& _name,
 }
 
 //
-size_t MultipleAlignmentElement::getNumColumns() const
-{
-    return leading_columns + padded_sequence.size() + trailing_columns;
-}
-
-//
 size_t MultipleAlignmentElement::getStartColumn() const
 {
     return leading_columns;
@@ -75,35 +69,6 @@ size_t MultipleAlignmentElement::getEndColumn() const
 {
     return getNumColumns() - trailing_columns - 1;
 }
-
-//
-char MultipleAlignmentElement::getColumnSymbol(size_t column_idx) const
-{
-    assert(column_idx < getNumColumns());
-    if(column_idx < leading_columns || column_idx >= leading_columns + padded_sequence.size()) {
-        return '\0';
-    }
-    else {
-        assert(column_idx - leading_columns < padded_sequence.size());
-        return padded_sequence[column_idx - leading_columns];
-    }
-}
-
-//
-char MultipleAlignmentElement::getColumnQuality(size_t column_idx) const
-{
-    assert(column_idx < getNumColumns());
-    if(padded_quality.empty() || 
-       column_idx < leading_columns || 
-       column_idx >= leading_columns + padded_quality.size()) {
-        return '\0';
-    }
-    else {
-        assert(column_idx - leading_columns < padded_sequence.size());
-        return padded_quality[column_idx - leading_columns];
-    }
-}
-
 
 //
 int MultipleAlignmentElement::getPaddedPositionOfBase(size_t idx) const
