@@ -55,7 +55,7 @@ MultipleAlignmentElement::MultipleAlignmentElement(const std::string& _name,
                                                                       leading_columns(leading),
                                                                       trailing_columns(trailing)
 {
-
+    assert(padded_quality.empty() || padded_quality.size() == padded_sequence.size());
 }
 
 //
@@ -329,6 +329,7 @@ void MultipleAlignment::_addSequence(const std::string& name,
     if(is_extension) {
         //printf("Extending the alignment %zu bases\n", sequence.size() - incoming_index);
         padded_output.append(sequence.substr(incoming_index));
+        padded_quality.append(quality.substr(incoming_index));
 
         // Ensure that the incoming sequence ends at least as far as the last base
         // currently in the multiple alignment. Otherwise this sequence is a containment
