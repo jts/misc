@@ -182,8 +182,11 @@ class MultipleAlignment
         // min_trim_coverage depth at the ends of the base sequence.
         std::string calculateBaseConsensus(int min_call_coverage, int min_trim_coverage);
 
-        // Calculate consensus sequence that maximizes the likelihood of the multiple alignment
+        // Calculate consensus sequence of the base element that maximizes the likelihood of the multiple alignment
         void calculateBaseConsensusLikelihood(std::string* consensus_sequence, std::string* consensus_quality);
+        
+        // Calculate the consensus over all columns
+        void calculateFullConsensusLikelihood(std::string* consensus_sequence, std::string* consensus_quality);
 
         // Filter out sequences in the multiple alignment by finding columns with a discrepant
         // consensus base. If two bases in a given column have count more than min_count,
@@ -241,6 +244,12 @@ class MultipleAlignment
                           const SequenceOverlap& overlap,
                           bool is_extension);
         
+        // Calculate the consensus over the range of columns
+        void _likelihoodConsensus(size_t start_column, 
+                                  size_t end_column, 
+                                  std::string* consensus_sequence, 
+                                  std::string* consensus_quality);
+
         // Returns a string with the most frequent base for each column
         // including padding symbols
         std::string getPaddedConsensus() const;

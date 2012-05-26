@@ -443,6 +443,24 @@ std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int
 //
 void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_sequence, std::string* consensus_quality)
 {
+    MultipleAlignmentElement& base_element = m_sequences.front();
+    size_t start_column = base_element.getStartColumn();
+    size_t end_column = base_element.getEndColumn();
+    _likelihoodConsensus(start_column, end_column, consensus_sequence, consensus_quality);
+}
+
+//
+void MultipleAlignment::calculateFullConsensusLikelihood(std::string* consensus_sequence, std::string* consensus_quality)
+{
+    _likelihoodConsensus(0, getNumColumns() - 1, consensus_sequence, consensus_quality);
+}
+
+
+void MultipleAlignment::_likelihoodConsensus(size_t start_column, 
+                                             size_t end_column, 
+                                             std::string* consensus_sequence, 
+                                             std::string* consensus_quality)
+{
 #ifdef MA_DEBUG_CONSENSUS
     print();
 #endif
@@ -455,10 +473,6 @@ void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_
     // nucleotide in the sequence.
     const double PROBABILITY_GAP = 0.0001;
 
-    MultipleAlignmentElement& base_element = m_sequences.front();
-    size_t start_column = base_element.getStartColumn();
-    size_t end_column = base_element.getEndColumn();
-    
     for(size_t c = start_column; c <= end_column; ++c) {
         std::vector<int> counts = getColumnBaseCounts(c);
 
@@ -540,9 +554,10 @@ void MultipleAlignment::calculateBaseConsensusLikelihood(std::string* consensus_
             consensus_sequence->push_back(call_symbol);
             consensus_quality->push_back(quality_symbol);
         }
-    }
+    }    
 }
 
+//
 void MultipleAlignment::filterByMismatchQuality(int max_sum_mismatch)
 {
 
@@ -578,11 +593,11 @@ void MultipleAlignment::filterByMismatchQuality(int max_sum_mismatch)
     // keep_vector[i] == 1 means that sequence i should be kept.
     std::vector<bool> keep_vector(m_sequences.size(), 1);
 
-//    print(400);
+// print(400);
     for(size_t i = 1; i < m_sequences.size(); ++i) {
         if(scores[i] > max_sum_mismatch)
             keep_vector[i] = 0;
-    }   
+    }
 
     // Erase elements from the vector
     filterByVector(keep_vector);
