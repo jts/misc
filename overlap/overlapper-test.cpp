@@ -105,5 +105,11 @@ int main(int argc, char** argv)
     SequenceOverlap overlap_r56 = Overlapper::extendMatch(read_5, read_6, 117, 81, 20);
 //    SequenceOverlap overlap_r56 = Overlapper::computeOverlap(read_5, read_6);
     overlap_r56.printAlignment(read_5, read_6);
-        //Overlapper::computeOverlap(read_3, read_4);
+
+    std::cout << "Testing mismatch at end\n";
+    std::string read_7 = "TAGTAGAGATGGGGTTTCACCATGTTGGCTAGGATGGTCTCCATCTCCTGACCTTGTGATCCTCCCGCCTCGGCCTCCCA";
+    std::string read_8 = "TGCTTCAACTTCCCGAGTAGCTGGGATTACAGGTGTCTGCCACCACACCTGGTTAATTTTTGTATTTTCAGTAGAGATGGGGTTTCACCATGTTGGCTAGG";
+    SequenceOverlap read_78 = Overlapper::computeOverlap(read_7, read_8);
+    std::cout << read_78 << "\n\n";
+    read_78.printAlignment(read_7, read_8);
 }
