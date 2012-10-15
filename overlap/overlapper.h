@@ -35,7 +35,8 @@
 struct SequenceInterval
 {
     // functions
-    
+    SequenceInterval();
+        
     // Check that the interval is valid
     bool isValid() const { return start <= end; }
     
@@ -68,7 +69,8 @@ struct SequenceInterval
 struct SequenceOverlap
 {
     // Functions
-    
+    SequenceOverlap();
+
     // Check that the record is properly formed
     bool isValid() const;
 
@@ -124,7 +126,7 @@ struct OverlapperParams
 
 // Global variables
 extern OverlapperParams default_params; // { 2, -5, -3 };
-extern OverlapperParams ungapped_params; // { 2, -100, -3 };
+extern OverlapperParams ungapped_params; // { 2, -10000, -3 };
 
 //
 namespace Overlapper
