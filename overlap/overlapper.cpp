@@ -32,7 +32,7 @@
 #include <limits>
 #include <stdio.h>
 
-OverlapperParams default_params = { 2, -5, -3 };
+OverlapperParams default_params = { 2, -6, -3 };
 OverlapperParams ungapped_params = { 2, -10000, -3 };
 
 //
