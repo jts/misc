@@ -53,22 +53,22 @@ int main(int argc, char** argv)
     std::cout << "\nTesting multiple alignment from file\n";
     if(argc < 2) {
         std::cerr << "No filename given\n";
-        exit(EXIT_FAILURE);
+    } else {
+
+        std::vector<std::string> test_sequences_1;
+        
+        std::string filename = argv[1];
+        std::cout << "Reading sequences from " << filename << "\n";
+        std::ifstream input_stream(filename.c_str());
+        std::string tmp;
+        while(getline(input_stream, tmp))
+            test_sequences_1.push_back(tmp);
+
+        std::cout << "Read " << test_sequences_1.size() << " sequences from file\n";
+
+        MultipleAlignment ma_1 = MultipleAlignmentBuilder::alignToFirst(test_sequences_1);
+        ma_1.print();
+        ma_1.printPileup();
+        ma_1.calculateBaseConsensus(3, 3);
     }
-
-    std::vector<std::string> test_sequences_1;
-    
-    std::string filename = argv[1];
-    std::cout << "Reading sequences from " << filename << "\n";
-    std::ifstream input_stream(filename.c_str());
-    std::string tmp;
-    while(getline(input_stream, tmp))
-        test_sequences_1.push_back(tmp);
-
-    std::cout << "Read " << test_sequences_1.size() << " sequences from file\n";
-
-    MultipleAlignment ma_1 = MultipleAlignmentBuilder::alignToFirst(test_sequences_1);
-    ma_1.print();
-    ma_1.printPileup();
-    ma_1.calculateBaseConsensus(3, 3);
 }
