@@ -69,6 +69,52 @@ size_t MultipleAlignmentElement::getEndColumn() const
 {
     return getNumColumns() - trailing_columns - 1;
 }
+    
+bool MultipleAlignmentElement::hasBaseInColumn(size_t column_idx) const
+{
+    char s = getColumnSymbol(column_idx);
+    return s != '\0' && s != '-';
+}
+
+//
+char MultipleAlignmentElement::getColumnSymbol(size_t column_idx) const
+{
+    assert(column_idx < getNumColumns());
+    if(column_idx < leading_columns || column_idx >= leading_columns + padded_sequence.size()) {
+        return '\0';
+    } else {
+        assert(column_idx - leading_columns < padded_sequence.size());
+        return padded_sequence[column_idx - leading_columns];
+    }
+}
+
+//
+char MultipleAlignmentElement::getColumnQuality(size_t column_idx) const
+{
+    assert(column_idx < getNumColumns());
+    if(padded_quality.empty() || 
+       column_idx < leading_columns || 
+       column_idx >= leading_columns + padded_quality.size()) {
+        return '\0';
+    }
+    else {
+        assert(column_idx - leading_columns < padded_sequence.size());
+        return padded_quality[column_idx - leading_columns];
+    }
+}
+
+//
+std::string MultipleAlignmentElement::getPaddedSubstr(size_t start_column, size_t length) const
+{
+    std::string out;
+    out.reserve(length);
+
+    for(size_t i = start_column; i < start_column + length; ++i)
+        out.push_back(getColumnSymbol(i));
+
+    assert(out.size() == length);
+    return out;
+}
 
 //
 int MultipleAlignmentElement::getPaddedPositionOfBase(size_t idx) const
@@ -266,7 +312,6 @@ void MultipleAlignment::_addSequence(const std::string& name,
 #endif
 
     while(cigar_index < expanded_cigar.size()) {
-
         // Check if we are in an existing template gap. This must be handled
         // seperately
         bool in_template_gap = template_padded[template_index] == '-';
@@ -324,7 +369,6 @@ void MultipleAlignment::_addSequence(const std::string& name,
                     break;
                 case 'S':
                     cigar_index += 1;
-                    template_index += 1;
                     break;
                 default:
                     std::cerr << "Error: unhandled cigar symbol " << expanded_cigar[cigar_index] << "\n";
@@ -373,6 +417,31 @@ void MultipleAlignment::_addSequence(const std::string& name,
     */
 }
 
+SequenceOverlap MultipleAlignment::getAlignment(size_t row0, size_t row1) const
+{
+    size_t start_column = getFirstAlignedBaseColumn(row0, row1);
+    size_t end_column = getFirstAlignedBaseColumn(row0, row1);
+
+    SequenceOverlap overlap;
+    overlap.match[0].start = columnIndexToBaseIndex(row0, start_column);
+    overlap.match[0].end = columnIndexToBaseIndex(row0, end_column);
+    overlap.length[0] = getUnpaddedSequence(row0).length();
+
+    overlap.match[1].start = columnIndexToBaseIndex(row1, start_column);
+    overlap.match[1].end = columnIndexToBaseIndex(row1, end_column);
+    overlap.length[1] = getUnpaddedSequence(row1).length();
+
+    overlap.cigar = calculateCigarBetweenRows(row0, row1);
+    overlap.total_columns = overlap.calculateTotalColumns();
+    
+    // These fields are unavailable
+    overlap.score = -1;
+    overlap.edit_distance = -1;
+
+    return overlap;
+}
+
+
 bool MultipleAlignment::isValid() const
 {
     size_t total_columns = getNumColumns();
@@ -383,6 +452,37 @@ bool MultipleAlignment::isValid() const
         ++i;
     }
     return true;
+}
+
+size_t MultipleAlignment::getFirstAlignedBaseColumn(size_t row0, size_t row1) const
+{
+    size_t num_cols = getNumColumns();
+    size_t i = 0;
+    while(i < num_cols)
+    {
+        bool base0 = m_sequences[row0].hasBaseInColumn(i);
+        bool base1 = m_sequences[row1].hasBaseInColumn(i);
+        if(base0 && base1)
+            return i;
+        ++i;
+    }
+    return num_cols; // No alignment between these rows
+}
+
+size_t MultipleAlignment::getLastAlignedBaseColumn(size_t row0, size_t row1) const
+{
+    size_t num_cols = getNumColumns();
+    int i = num_cols - 1;
+    while(i >= 0)
+    {
+        bool base0 = m_sequences[row0].hasBaseInColumn(i);
+        bool base1 = m_sequences[row1].hasBaseInColumn(i);
+        if(base0 && base1)
+            return i;
+        --i;
+    }
+
+    return num_cols; // No alignment between these rows
 }
 
 size_t MultipleAlignment::calculateEditDistanceBetweenRows(size_t row0, size_t row1) const
@@ -406,20 +506,29 @@ size_t MultipleAlignment::calculateEditDistanceBetweenRows(size_t row0, size_t r
     return edit_distance;
 }
 
-std::string MultipleAlignment::calculateExpandedCigarBetweenRows(size_t row0, size_t row1) const
+std::string MultipleAlignment::calculateCigarBetweenRows(size_t row0, size_t row1) const
 {
-    size_t num_columns = getNumColumns();
     assert(row0 < m_sequences.size());
     assert(row1 < m_sequences.size());
     std::string cigar;
+    
+    size_t start_column = getFirstAlignedBaseColumn(row0, row1);
+    size_t end_column = getLastAlignedBaseColumn(row0, row1);
 
-    for(size_t i = 0; i < num_columns; ++i)
+    for(size_t i = start_column; i <= end_column; ++i)
     {
         char row0_symbol = getSymbol(row0, i);
         char row1_symbol = getSymbol(row1, i);
 
-        if(row0_symbol == '\0' || row1_symbol == '\0' || (row0_symbol == '-' && row1_symbol == '-'))
+        // Since we calculated the first/last column above, we can
+        // assume every base within the alignment is a valid alignment symbol
+        assert(row0_symbol != '\0');
+        assert(row1_symbol != '\0');
+
+        // Both in a gap, skip
+        if(row0_symbol == '-' && row1_symbol == '-')
             continue;
+
         if(row0_symbol == '-')
             cigar.push_back('I');
         else if(row1_symbol == '-')
@@ -427,7 +536,7 @@ std::string MultipleAlignment::calculateExpandedCigarBetweenRows(size_t row0, si
         else
             cigar.push_back('M');
     }
-    return cigar;
+    return Overlapper::compactCigar(cigar);
 }
 
 std::string MultipleAlignment::calculateBaseConsensus(int min_call_coverage, int min_trim_coverage)
@@ -753,6 +862,83 @@ size_t MultipleAlignment::getNumRows() const
     return m_sequences.size();
 }
 
+// Calculate the index of the base in the original sequence for a given column
+size_t MultipleAlignment::columnIndexToBaseIndex(size_t row, size_t col) const 
+{ 
+    assert(row < m_sequences.size());
+    assert(col < getNumColumns());
+
+    // It is only valid to call this function for columns where
+    // this row has an actual sequence symbol
+    if(!m_sequences[row].hasBaseInColumn(col)) {
+        std::cerr << "Error: MultipleAlignment::columnToBaseIndex called on an empty column\n";
+        assert(false);
+    }
+
+    size_t base_index = 0;
+    for(size_t i = 0; i < col; ++i)
+    {
+        if(m_sequences[row].hasBaseInColumn(i))
+            base_index += 1;
+    }
+    return base_index;
+}
+
+//
+size_t MultipleAlignment::countHomopolymer(size_t row, int from, int to) const
+{
+    int num_columns = getNumColumns();
+    assert(row < m_sequences.size());
+    assert(from < num_columns);
+    
+    //
+    if(to == -1)
+        to = num_columns - 1; // inclusive
+
+    // Determine iteration direction
+    int step = from <= to ? 1 : -1;
+    
+    // The first or last column of the multiple alignment was requested
+    // This can only be a homopolymer of length 1
+    if(from == num_columns - 1 || (from == 0 && step < 0))
+        return 1;
+    
+    // Advance to the next base symbol in the sequence
+    char b = '\0';
+    int max_position = num_columns - 1;
+    while(from >= 0 && from <= max_position) {
+        if(!m_sequences[row].hasBaseInColumn(from)) {
+            from += step;
+        } else {
+            b = getSymbol(row, from);
+            break;
+        }
+    }
+
+    // Count the length, skipping padding symbols
+    size_t length = 1;
+    do
+    {
+        from += step;
+        if(from < 0 || from > max_position)
+            return length;
+
+        char s = getSymbol(row, from);
+
+        // skip gaps
+        if(s == '-')
+            continue;
+
+        // matches the key base
+        if(s == b)
+            length += 1;
+        else // break on mismatch or end of the alignment
+            break;
+    }
+    while(from != to);
+    return length;
+}
+
 //
 std::string MultipleAlignment::getPileup(size_t idx) const
 {
@@ -789,18 +975,19 @@ void MultipleAlignment::print(size_t max_columns) const
 
     size_t total_columns = m_sequences.front().getNumColumns();
 
-    std::vector<size_t> sequence_index_order(m_sequences.size(), 0);
+    std::vector<size_t> sequence_index_order;
 
     // Initialize order
-    for(size_t i = 0; i < sequence_index_order.size(); ++i)
-        sequence_index_order[i] = i;
+    for(size_t i = 0; i < m_sequences.size(); ++i)
+        sequence_index_order.push_back(i);
 
     // Sort sequences by the first aligned base on sequence[0]
     SequencePrintOrder sorter(m_sequences);
-    std::stable_sort(sequence_index_order.begin(), sequence_index_order.end(), sorter);
+    std::sort(sequence_index_order.begin(), sequence_index_order.end(), sorter);
 
     // Make a simple consensus to use as a mask
     std::string consensus = getPaddedConsensus();
+    assert(consensus.size() == total_columns);
 
     // Print the multiple alignment in segments
     for(size_t c = 0; c < total_columns; c += max_columns) {
@@ -863,15 +1050,26 @@ void MultipleAlignment::printPileup() const
     }
 }
 
+std::string MultipleAlignment::getPaddedSubstr(size_t row, size_t start, size_t length) const
+{
+    assert(row < m_sequences.size());
+    return m_sequences[row].getPaddedSubstr(start, length);
+}
+
 //
 std::string MultipleAlignment::getPaddedConsensus() const
 {
     std::string out;
     for(size_t i = 0; i < getNumColumns(); ++i) {
         SymbolCountVector symbol_counts = getSymbolCountVector(i);
-        assert(!symbol_counts.empty());
-        std::sort(symbol_counts.begin(), symbol_counts.end(), SymbolCount::countOrderDescending);
-        out.append(1, symbol_counts.front().symbol);
+        char symbol;
+        if(symbol_counts.empty()) {
+            symbol = ' ';
+        } else {
+            std::sort(symbol_counts.begin(), symbol_counts.end(), SymbolCount::countOrderDescending);
+            symbol = symbol_counts.front().symbol;
+        }
+        out.append(1, symbol);
     }
     return out;
 }
@@ -970,8 +1168,10 @@ std::vector<int> MultipleAlignment::getColumnBaseCounts(size_t idx) const
     std::vector<int> out(m_alphabet_size, 0);
     for(size_t i = 0; i < m_sequences.size(); ++i) {
         char symbol = m_sequences[i].getColumnSymbol(idx);
-        if(symbol != '\0')
+        if(symbol != '\0') {
+
             out[symbol2index(symbol)] += 1;
+        }
     }
     return out;
 }
