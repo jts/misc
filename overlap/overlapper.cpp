@@ -31,6 +31,7 @@
 #include <sstream>
 #include <limits>
 #include <stdio.h>
+#include <inttypes.h>
 
 // 
 OverlapperParams default_params = { 2, -6, -3, -2, ALT_OVERLAP };
@@ -625,7 +626,11 @@ SequenceOverlap Overlapper::extendMatch(const std::string& s1, const std::string
     return output;
 }
 
-// The score for this cell coming from a match, deletion and insertion
+static const uint8_t FROM_DIAG = 0;
+static const uint8_t FROM_LEFT = 1;
+static const uint8_t FROM_UP = 2;
+
+// The score for this cell coming from a match, deletion and insertion and its direction
 struct AffineCell
 {
     AffineCell() : G(0), I(-std::numeric_limits<int>::max()), D(-std::numeric_limits<int>::max()) {}
@@ -634,8 +639,10 @@ struct AffineCell
     int G;
     int I;
     int D;
-
-    unsigned int direction;
+    
+    uint8_t Gt;
+    uint8_t It;
+    uint8_t Dt;
 };
 
 typedef std::vector<AffineCell> AffineCells;
@@ -703,17 +710,30 @@ SequenceOverlap Overlapper::computeAlignmentAffine(const std::string& s1, const 
 
             // When computing the score starting from the left/right cells, we have to determine
             // whether to extend an existing gap or start a new one.
-            if(up.I > up.G - gap_open)
+            if(up.I > up.G - gap_open) {
                 curr.I = up.I - gap_ext;
-            else
+                curr.It = FROM_UP;
+            } else {
                 curr.I = up.G - (gap_open + gap_ext);
+                curr.It = FROM_DIAG;
+            }
 
-            if(left.D > left.G - gap_open)
+            if(left.D > left.G - gap_open) {
                 curr.D = left.D - gap_ext;
-            else
+                curr.Dt = FROM_LEFT;
+            } else {
                 curr.D = left.G - (gap_open + gap_ext);
-            
+                curr.Dt = FROM_DIAG;
+            }
+
             curr.G = max3(curr.D, curr.I, diagonal);
+
+            if(curr.G == curr.I)
+                curr.Gt = FROM_UP;
+            else if(curr.G == curr.D)
+                curr.Gt = FROM_LEFT;
+            else
+                curr.Gt = FROM_DIAG;
         }
     }
  
@@ -772,6 +792,9 @@ SequenceOverlap Overlapper::computeAlignmentAffine(const std::string& s1, const 
     output.match[1].end = j - 1;
     output.length[0] = s1.length();
     output.length[1] = s2.length();
+
+    uint8_t direction = score_matrix[i][j].Gt;
+
 #ifdef DEBUG_OVERLAPPER
     printf("Endpoints selected: (%d %d) with score %d\n", output.match[0].end, output.match[1].end, output.score);
 #endif
@@ -790,57 +813,28 @@ SequenceOverlap Overlapper::computeAlignmentAffine(const std::string& s1, const 
           (params.type == ALT_OVERLAP && (i > 0 && j > 0)) ||
           (params.type == ALT_CONTAINMENT && (j > 0))) {
 
-        // Get cell references, avoiding going out of bounds
-        
-        // diagonal cell
-        AffineCell& dc = i > 0 && j > 0 ? score_matrix[i - 1][j - 1] : null_cell;
-
-        // up cell
-        AffineCell& uc = j > 0 ? score_matrix[i][j - 1] : null_cell;
-
-        // left cell
-        AffineCell& lc = i > 0 ? score_matrix[i - 1][j] : null_cell;
-        
-        // Compute the possible previous locations of the path
-        bool is_match = i > 0 && j > 0 && s1[i - 1] == s2[j - 1];
-
-        int diagonal = dc.G + (is_match ? params.match_score : params.mismatch_penalty);
-        int up1 = uc.G - (gap_open + gap_ext);
-        int up2 = uc.I - gap_ext;
-
-        int left1 = lc.G - (gap_open + gap_ext);
-        int left2 = lc.D - gap_ext;
-
-        int curr = score_matrix[i][j].G;
-        int bi = i;
-        int bj = j;
-        // If there are multiple possible paths to this cell
-        // we break ties in order of insertion,deletion,match
-        // this helps left-justify matches for homopolymer runs
-        // of unequal lengths
-        char symbol;
-        if(curr == up1 || curr == up2) {
+        if(direction == FROM_UP) {
             cigar.push_back('I');
+            direction = score_matrix[i][j].It;
             j -= 1;
             output.edit_distance += 1;
-            symbol = 'U';
-        } else if(curr == left1 || curr == left2) {
+        } else if(direction == FROM_LEFT) {
             cigar.push_back('D');
+            direction = score_matrix[i][j].Dt;
             i -= 1;
             output.edit_distance += 1;
-            symbol = 'L';
         } else {
-            assert(curr == diagonal);
+            // Compute the possible previous locations of the path
+            bool is_match = i > 0 && j > 0 && s1[i - 1] == s2[j - 1];
+
             if(!is_match)
                 output.edit_distance += 1;
             cigar.push_back('M');
-            symbol = s2[j];
+            direction = score_matrix[i][j].Gt;
             i -= 1;
             j -= 1;
         }
         
-        printf("[%d %d] C:%d D:%d U:%d,%d L:%d,%d S:%c\n", bi, bj, curr, diagonal, up1, up2, left1, left2, symbol);
-
         output.total_columns += 1;
     }
 
