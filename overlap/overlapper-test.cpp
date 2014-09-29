@@ -169,8 +169,45 @@ int main(int argc, char** argv)
         "CAGATTCCGAAATAAAGGGTTGAACCATTAAAAGAAACATGGGTGGCCCTAGAAATTAGT"
         "GTTCTCTCCCT";
     
+    params.type = ALT_OVERLAP;
     params.gap_ext_penalty = 0;
-    params.type = ALT_CONTAINMENT;
+    ovr_ab = Overlapper::computeAlignmentAffine(a, b, params);
+    std::cout << ovr_ab << "\n\n";
+    ovr_ab.printAlignment(a, b);
+
+    a = "CGCCCTTACCACACTGCTCCTACCTATCTCCCCTTTTATGCTAATAATCTTATAGAAATTTAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTGCAATACTTAATTTCTGCAACAGCTAAGGACTGCAAAACCCCACTCTGCATCAACTGAACGCAAATCAGCCACTTTAATTAAGCTAAGCCCTTACTAGACCAATGGGACTTAAACCCACAAACACTTAGTTAACAGCTAAGCACCCTAATCAACTGGCTTCAATCTACTTCTCCCGCCGCCGGGAAAAAAGGCGGGAGAAGCCCCGGCAGGTTTGAAGCTGCTTCTTCGAATTTGCAATTCAATATGAAAATCACCTCAGAGCTGGTAAAAAGAGGCTTAA";
+    b = "CACCCGCCGCCGGGAAAAAAGGCGGGAGAAGCCCCGGCAGGTTTGAAGCTGCTTCTGCGAATTTGCAATTCAATATGAAAATCACCTCGGAGCTGGTAAAAAGAGGCCTAA";
+
+    ovr_ab = Overlapper::computeAlignmentAffine(a, b, params);
+    std::cout << ovr_ab << "\n\n";
+    ovr_ab.printAlignment(a, b);
+
+    a = "TTAGAGCTGTGCCCAGGACTCCAGCTCATGCGCCGAATAGTAGGTACAGTGTTCCAATGTCTTTGTGGTTTGTAGAGAACAATCAACGGTCGGCGAACATCAGTGGGATAAGGTAAAATGGCTGAGTGAAGCATTGGACTGTAAATCTAAAGACAGGGGCTAAGCCTCTTTTTACCAGCTCTGAGGTGATTTTCATATTGAATTGCAAATTCGAAGAAGCAGCTTCAAACCTGGCGGGGCTTCTCCCGCCTTTTTTTCCTGCGGCGGGAG";
+    b = "TTAGGCCTCTTTTTACCAGCTCCGAGGTGATTTTCATATTGAATTGCAAATTCGCAGAAGCAGCTTCAAACCTGCCGGGGCTTCTCCCGCCTTTTTTCCCGGCGGCGGGTG";
+
+    ovr_ab = Overlapper::computeAlignmentAffine(a, b, params);
+    std::cout << ovr_ab << "\n\n";
+    ovr_ab.printAlignment(a, b);
+    
+    std::cout << "=========================\n";
+    a = "AGCTGAAACTATTTAAATAGATCGCCGCCGGGAAAAAAGGCGGGAGAA";
+    b = "CACCCGCCGCCGGGAAAAAAGGCGGGAGAA";
+    
+    params = affine_default_params;
+    params.type = ALT_OVERLAP;
+    std::cout << "params.type " << params.type << "\n";
+    params.gap_ext_penalty = 0;
+    params.use_m_ops = true;
+
+    ovr_ab = Overlapper::computeAlignmentAffine(a, b, params);
+    std::cout << ovr_ab << "\n\n";
+    ovr_ab.printAlignment(a, b);
+    
+    std::cout << "=========================\n";
+
+    params.type = ALT_OVERLAP;
+    a = "AAACCC";
+    b = "T";
     ovr_ab = Overlapper::computeAlignmentAffine(a, b, params);
     std::cout << ovr_ab << "\n\n";
     ovr_ab.printAlignment(a, b);
